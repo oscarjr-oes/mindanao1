@@ -1,0 +1,1635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Two Paths to Work — LANDAS Traffic Flow Visualization</title>
+<meta name="description" content="Interactive traffic-flow visualization comparing an existing car-dependent government compound against a proposed 15-minute community for BARMM stakeholders.">
+<style>
+/* Fonts: system stack, no external deps — works offline */
+:root {
+  --deep-green: #0D2217;
+  --dark-green: #1B4332;
+  --gold: #C8972A;
+  --ivory: #F2EDE2;
+  --sage-muted: #b8c6b8;
+  --sage: #5A7A5A;
+  --panel-bg: rgba(13,34,23,.88);
+  --panel-border: rgba(200,151,42,.22);
+  --red-congestion: #D94040;
+  --amber: #E8A838;
+  --font-family: "Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: var(--deep-green); color: var(--ivory); font-family: var(--font-family); }
+body { display: flex; flex-direction: column; }
+
+/* ─── TITLE BAR ─── */
+.title-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 20px; background: var(--panel-bg);
+  backdrop-filter: blur(10px); border-bottom: 1px solid var(--panel-border);
+  z-index: 100; min-height: 48px; flex-shrink: 0;
+}
+.wordmark { font-size: 22px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); }
+.wordmark span { color: var(--ivory); font-weight: 400; font-size: 13px; letter-spacing: 0.08em; margin-left: 12px; text-transform: none; }
+.title-tabs { display: flex; gap: 6px; align-items: center; }
+.tab-btn {
+  padding: 6px 16px; border-radius: 8px; border: 1px solid var(--panel-border);
+  background: transparent; color: var(--sage-muted); font-family: var(--font-family);
+  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer;
+  transition: all 0.3s ease;
+}
+.tab-btn:hover { border-color: var(--gold); color: var(--ivory); }
+.tab-btn.active { background: rgba(200,151,42,.18); border-color: var(--gold); color: var(--gold); }
+.preset-group { display: flex; gap: 4px; margin-left: 12px; }
+.preset-btn {
+  padding: 5px 12px; border-radius: 6px; border: 1px solid rgba(200,151,42,.15);
+  background: transparent; color: var(--sage-muted); font-family: var(--font-family);
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
+  transition: all 0.25s ease;
+}
+.preset-btn:hover { background: rgba(200,151,42,.12); color: var(--gold); border-color: var(--gold); }
+.preset-btn.active { background: rgba(200,151,42,.2); color: var(--gold); border-color: var(--gold); }
+.print-btn {
+  padding: 5px 12px; border-radius: 6px; border: 1px solid rgba(200,151,42,.15);
+  background: transparent; color: var(--sage-muted); font-family: var(--font-family);
+  font-size: 10px; cursor: pointer; margin-left: 8px; transition: all 0.25s;
+}
+.print-btn:hover { color: var(--gold); border-color: var(--gold); }
+
+/* ─── MAIN LAYOUT ─── */
+.main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.maps-row { flex: 1; display: flex; gap: 0; position: relative; min-height: 0; }
+.map-panel {
+  flex: 1; position: relative; overflow: hidden; border-right: 1px solid rgba(200,151,42,.12);
+}
+.map-panel:last-child { border-right: none; }
+.map-panel canvas { width: 100%; height: 100%; display: block; }
+.panel-label {
+  position: absolute; top: 12px; left: 14px; z-index: 10;
+  background: var(--panel-bg); backdrop-filter: blur(10px);
+  border: 1px solid var(--panel-border); border-radius: 10px;
+  padding: 8px 16px; font-size: 11px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--gold);
+}
+.panel-label .sub { display: block; font-size: 9px; color: var(--sage-muted); letter-spacing: 0.08em; text-transform: none; margin-top: 2px; }
+.map-caption {
+  position: absolute; bottom: 8px; left: 14px; right: 14px; z-index: 10;
+  font-size: 8px; color: var(--sage-muted); opacity: 0.7; font-style: italic;
+  text-align: center;
+}
+
+/* ─── TIME SCRUBBER ─── */
+.time-scrubber {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 20px; background: var(--panel-bg);
+  backdrop-filter: blur(10px); border-top: 1px solid var(--panel-border);
+  flex-shrink: 0;
+}
+.time-label { font-size: 13px; color: var(--gold); font-weight: 600; letter-spacing: 0.05em; min-width: 50px; }
+.time-slider { flex: 1; -webkit-appearance: none; appearance: none; height: 4px; background: var(--dark-green); border-radius: 2px; outline: none; }
+.time-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--gold); cursor: pointer; box-shadow: 0 0 8px rgba(200,151,42,.5);
+}
+.play-btn {
+  width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--panel-border);
+  background: transparent; color: var(--gold); font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+}
+.play-btn:hover { background: rgba(200,151,42,.15); }
+.time-curve-label { font-size: 9px; color: var(--sage-muted); }
+
+/* ─── KPI STRIP ─── */
+.kpi-strip {
+  display: flex; flex-wrap: wrap; gap: 0; padding: 0 0 36px 0;
+  background: var(--panel-bg); backdrop-filter: blur(10px);
+  border-top: 1px solid var(--panel-border); flex-shrink: 0;
+}
+.kpi-card {
+  flex: 1; min-width: 140px; padding: 10px 14px;
+  border-right: 1px solid rgba(200,151,42,.1);
+  display: flex; flex-direction: column; gap: 2px;
+}
+.kpi-card:last-child { border-right: none; }
+.kpi-header {
+  font-size: 8px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--sage-muted);
+}
+.kpi-values { display: flex; gap: 12px; align-items: baseline; }
+.kpi-val { font-size: 18px; font-weight: 700; color: var(--ivory); }
+.kpi-val.orc { color: var(--red-congestion); }
+.kpi-val.parang { color: var(--sage); }
+.kpi-delta { font-size: 10px; color: var(--gold); font-weight: 600; }
+
+/* ─── CONTROLS DRAWER ─── */
+.controls-drawer {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+  transform: translateY(calc(100% - 36px)); transition: transform 0.4s cubic-bezier(.4,0,.2,1);
+  background: var(--panel-bg); backdrop-filter: blur(14px);
+  border-top: 1px solid var(--panel-border); border-radius: 14px 14px 0 0;
+  max-height: 70vh; overflow-y: auto;
+}
+.controls-drawer.open { transform: translateY(0); }
+.drawer-handle {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 8px; cursor: pointer; user-select: none;
+}
+.drawer-handle-bar { width: 40px; height: 3px; background: var(--sage-muted); border-radius: 2px; opacity: 0.5; }
+.drawer-handle-label { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); }
+.controls-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px; padding: 12px 20px 40px;
+}
+.control-group {
+  background: rgba(27,67,50,.4); border: 1px solid rgba(200,151,42,.12);
+  border-radius: 10px; padding: 10px 14px;
+}
+.control-group-title {
+  font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 8px; font-weight: 600;
+}
+.control-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.control-row:last-child { margin-bottom: 0; }
+.control-label { font-size: 10px; color: var(--sage-muted); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.control-slider {
+  width: 100px; -webkit-appearance: none; appearance: none; height: 3px;
+  background: var(--dark-green); border-radius: 2px; outline: none;
+}
+.control-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%;
+  background: var(--gold); cursor: pointer;
+}
+.control-value { font-size: 11px; color: var(--ivory); font-weight: 600; min-width: 40px; text-align: right; }
+.toggle-btn {
+  padding: 3px 10px; border-radius: 4px; border: 1px solid var(--panel-border);
+  background: transparent; color: var(--sage-muted); font-family: var(--font-family);
+  font-size: 9px; cursor: pointer; transition: all 0.2s;
+}
+.toggle-btn.active { background: rgba(200,151,42,.2); color: var(--gold); border-color: var(--gold); }
+
+/* ─── SIDEBAR ─── */
+.sidebar {
+  position: fixed; right: 0; top: 48px; bottom: 0; width: 280px; z-index: 150;
+  background: var(--panel-bg); backdrop-filter: blur(14px);
+  border-left: 1px solid var(--panel-border);
+  transform: translateX(100%); transition: transform 0.4s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 16px 16px 50px 16px;
+}
+.sidebar.open { transform: translateX(0); }
+.sidebar-toggle {
+  position: fixed; right: 8px; top: 56px; z-index: 160;
+  width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--panel-border);
+  background: var(--panel-bg); backdrop-filter: blur(10px);
+  color: var(--gold); font-size: 12px; cursor: pointer; display: flex;
+  align-items: center; justify-content: center; transition: all 0.2s;
+}
+.sidebar-toggle:hover { background: rgba(200,151,42,.15); }
+.sidebar h3 {
+  font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 10px;
+}
+.sidebar .stat { font-size: 11px; color: var(--sage-muted); margin-bottom: 6px; }
+.sidebar .stat b { color: var(--ivory); }
+.sidebar .divider { border: none; border-top: 1px solid var(--panel-border); margin: 12px 0; }
+
+/* ─── FOOTER ─── */
+.footer {
+  padding: 4px 20px; text-align: center;
+  font-size: 8px; color: var(--sage-muted); opacity: 0.6;
+  background: rgba(13,34,23,.6); flex-shrink: 0;
+}
+
+/* ─── PRINT MODE ─── */
+body.print-mode .controls-drawer,
+body.print-mode .sidebar,
+body.print-mode .sidebar-toggle,
+body.print-mode .drawer-handle,
+body.print-mode .title-tabs,
+body.print-mode .preset-group,
+body.print-mode .print-btn,
+body.print-mode .play-btn { display: none !important; }
+body.print-mode .controls-drawer { transform: translateY(100%) !important; }
+body.print-mode .sidebar { transform: translateX(100%) !important; }
+
+/* ─── ANIMATIONS ─── */
+@keyframes pulse-red {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.road-pulse { animation: pulse-red 0.8s ease-in-out infinite; }
+@keyframes ghost-fade {
+  0% { opacity: 0.6; }
+  100% { opacity: 0; transform: translateY(-8px); }
+}
+
+/* ─── LEGEND ─── */
+.map-legend {
+  position: absolute; bottom: 28px; right: 12px; z-index: 10;
+  background: var(--panel-bg); backdrop-filter: blur(8px);
+  border: 1px solid var(--panel-border); border-radius: 8px;
+  padding: 8px 10px; font-size: 8px; color: var(--sage-muted);
+}
+.legend-item { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+.legend-item:last-child { margin-bottom: 0; }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+/* ─── TOOLTIP ─── */
+.custom-tooltip {
+  position: fixed;
+  background: rgba(13,34,23,0.95);
+  color: var(--ivory);
+  border: 1px solid var(--gold);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 11px;
+  pointer-events: none;
+  z-index: 10000;
+  max-width: 250px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+  backdrop-filter: blur(8px);
+}
+.custom-tooltip.visible {
+  opacity: 1;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .controls-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+  .kpi-card { min-width: 110px; padding: 8px 10px; }
+  .kpi-val { font-size: 15px; }
+}
+</style>
+</head>
+<body>
+
+<!-- DATA SCRIPTS -->
+<script src="data/orc-roads.js"></script>
+<script src="data/parang-roads.js"></script>
+<script src="data/sites.js"></script>
+
+<!-- ─── TITLE BAR ─── -->
+<div class="title-bar">
+  <a href="index.html" class="wordmark" style="text-decoration:none;cursor:pointer;" title="Back to landing page">LANDAS<span>Two Paths to Work</span></a>
+  <div style="display:flex;align-items:center;">
+    <div class="title-tabs">
+      <button class="tab-btn active" id="tabTraffic" onclick="setTab('traffic')">Traffic Flow</button>
+    </div>
+    <div class="preset-group">
+      <button class="preset-btn" id="presetConservative" onclick="applyPreset('conservative')">Conservative</button>
+      <button class="preset-btn active" id="presetExpected" onclick="applyPreset('expected')">Expected</button>
+      <button class="preset-btn" id="presetAmbitious" onclick="applyPreset('ambitious')">Ambitious</button>
+    </div>
+    <a href="index.html" class="print-btn" style="text-decoration:none;display:inline-flex;align-items:center;">&#8592; Landing page</a>
+    <button class="print-btn" onclick="togglePrint()">&#x1F5A8; Print</button>
+  </div>
+</div>
+
+<!-- ─── MAPS ─── -->
+<div class="main-content">
+  <div class="maps-row">
+    <div class="map-panel" id="orcPanel">
+      <canvas id="orcCanvas"></canvas>
+      <div class="panel-label">ORC Compound<span class="sub">Cotabato City — Existing</span></div>
+      <div class="map-caption">Indicative planning sketch — assumption-driven, not a traffic study.</div>
+      <div class="map-legend" id="orcLegend">
+        <div class="legend-item" data-tooltip="Volume/Capacity ratio: traffic volume compared to road capacity. < 0.6 means free-flowing traffic."><div class="legend-dot" style="background:var(--sage)"></div> V/C < 0.6 (Free flow)</div>
+        <div class="legend-item" data-tooltip="Volume/Capacity ratio: moderate traffic."><div class="legend-dot" style="background:var(--gold)"></div> V/C 0.6–0.9</div>
+        <div class="legend-item" data-tooltip="Volume/Capacity ratio: heavy traffic, slowing speeds."><div class="legend-dot" style="background:var(--red-congestion)"></div> V/C > 0.9</div>
+        <div class="legend-item" data-tooltip="Volume/Capacity ratio: gridlock, severe delays."><div class="legend-dot" style="background:#8B1A1A"></div> V/C > 1.2 (Gridlock)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--gold);opacity:.7"></div> Vehicle particle (≈25 trips)</div>
+      </div>
+    </div>
+    <div class="map-panel" id="parangPanel">
+      <canvas id="parangCanvas"></canvas>
+      <div class="panel-label">Landas Township<span class="sub">Parang — Proposed 15-min community</span></div>
+      <div class="map-caption">Indicative planning sketch — assumption-driven, not a traffic study.</div>
+      <div class="map-legend" id="parangLegend">
+        <h3>Link Congestion</h3>
+        <div class="legend-item" data-tooltip="Volume/Capacity ratio: traffic volume compared to road capacity. < 0.6 means free-flowing traffic."><div class="legend-dot" style="background:var(--sage)"></div> V/C < 0.6 (Free flow)</div>
+        <div class="legend-item" data-tooltip="Volume/Capacity ratio: moderate traffic."><div class="legend-dot" style="background:var(--gold)"></div> V/C 0.6–0.9</div>
+        <div class="legend-item" data-tooltip="Volume/Capacity ratio: heavy traffic, slowing speeds."><div class="legend-dot" style="background:var(--red-congestion)"></div> V/C > 0.9</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(242,237,226,.5)"></div> Walk/bike flow</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(200,151,42,.25)"></div> Ghost trip (avoided)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── TIME SCRUBBER ─── -->
+  <div class="time-scrubber">
+    <button class="play-btn" id="playBtn" onclick="togglePlay()">&#9654;</button>
+    <span class="time-label" id="timeLabel">07:30</span>
+    <input type="range" class="time-slider" id="timeSlider" min="300" max="1200" value="450" step="5" oninput="onTimeChange(this.value)">
+    <span class="time-curve-label" id="timeCurveLabel">AM Peak</span>
+  </div>
+
+  <!-- ─── KPI STRIP ─── -->
+  <div class="kpi-strip" id="kpiStrip">
+    <div class="kpi-card">
+      <div class="kpi-header" data-tooltip="Total vehicles currently active on the network, measured in Passenger Car Units (PCUs).">Peak Vehicle PCU</div>
+      <div class="kpi-values">
+        <span class="kpi-val orc" id="kpiOrcPCU">—</span>
+        <span class="kpi-val parang" id="kpiParangPCU">—</span>
+      </div>
+      <div class="kpi-delta" id="kpiDeltaPCU"></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-header" data-tooltip="Average time taken for a commuter from leaving home to arriving at their desk.">Avg Door-to-Desk (min)</div>
+      <div class="kpi-values">
+        <span class="kpi-val orc" id="kpiOrcDTD">—</span>
+        <span class="kpi-val parang" id="kpiParangDTD">—</span>
+      </div>
+      <div class="kpi-delta" id="kpiDeltaDTD"></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-header" data-tooltip="Total cumulative hours wasted by all commuters due to traffic delays.">Person-Hours Lost / Day</div>
+      <div class="kpi-values">
+        <span class="kpi-val orc" id="kpiOrcPHL">—</span>
+        <span class="kpi-val parang" id="kpiParangPHL">—</span>
+      </div>
+      <div class="kpi-delta" id="kpiDeltaPHL"></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-header" data-tooltip="Number of vehicles unable to park because demand exceeds parking supply.">Parking Deficit</div>
+      <div class="kpi-values">
+        <span class="kpi-val orc" id="kpiOrcParking">—</span>
+        <span class="kpi-val parang" id="kpiParangParking">—</span>
+      </div>
+      <div class="kpi-delta" id="kpiDeltaParking"></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-header" data-tooltip="Percentage of daily trips made without using a private car (walking, biking, transit).">% Car-Free Commute</div>
+      <div class="kpi-values">
+        <span class="kpi-val orc" id="kpiOrcCarFree">—</span>
+        <span class="kpi-val parang" id="kpiParangCarFree">—</span>
+      </div>
+      <div class="kpi-delta" id="kpiDeltaCarFree"></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-header" data-tooltip="Extrapolated cost based on the current time's traffic pattern. Uses ₱120/hr average value of time across 250 working days per year.">Annual Economic Cost</div>
+      <div class="kpi-values">
+        <span class="kpi-val orc" id="kpiOrcCost">—</span>
+        <span class="kpi-val parang" id="kpiParangCost">—</span>
+      </div>
+      <div class="kpi-delta" id="kpiDeltaCost"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── FOOTER ─── -->
+<div class="footer">PS Group — Landas Township Master Plan &bull; Indicative planning sketch — assumption-driven, not a traffic study.</div>
+
+<!-- ─── SIDEBAR: Network Structure ─── -->
+<button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">&#9776;</button>
+<div class="sidebar" id="sidebar">
+  <h3>Why the Geometry Wins</h3>
+  <div class="stat" data-tooltip="Number of primary entry and exit points connecting the site to the regional highway.">Access points (ORC): <b id="statOrcGates">~3 gates</b></div>
+  <div class="stat" data-tooltip="Number of primary entry and exit points connecting the site to the regional highway.">Access points (Parang): <b id="statParangAccess">Grid — 20+ entry points</b></div>
+  <hr class="divider">
+  <div class="stat" data-tooltip="Total linear length of all drivable roads within the site boundaries.">ORC total road length: <b id="statOrcRoadLen">—</b></div>
+  <div class="stat" data-tooltip="Total linear length of all drivable roads within the site boundaries.">Parang total road length: <b id="statParangRoadLen">—</b></div>
+  <hr class="divider">
+  <div class="stat" data-tooltip="Percentage of the road network equipped with sidewalks, footways, or dedicated pedestrian paths.">ORC pedestrian network: <b id="statOrcPedShare">—</b></div>
+  <div class="stat" data-tooltip="Percentage of the road network equipped with sidewalks, footways, or dedicated pedestrian paths.">Parang pedestrian network: <b id="statParangPedShare">—</b></div>
+  <hr class="divider">
+  <h3>Network Redundancy</h3>
+  <div class="stat">ORC: <b>Single-corridor dependency</b><br><span style="font-size:9px;color:var(--sage-muted)">Gate bottleneck amplifies any incident</span></div>
+  <div class="stat" style="margin-top:6px">Parang: <b>Grid redundancy</b><br><span style="font-size:9px;color:var(--sage-muted)">Multiple alternative routes absorb disruption</span></div>
+  <hr class="divider">
+  <h3 style="margin-top:12px">Isochrone Legend</h3>
+  <div class="stat"><span style="color:var(--sage)">●</span> 400m / ~5 min walk</div>
+  <div class="stat"><span style="color:var(--gold)">●</span> 800m / ~10 min walk</div>
+  <div class="stat"><span style="color:var(--ivory)">●</span> 1200m / ~15 min walk</div>
+</div>
+
+<!-- ─── CONTROLS DRAWER ─── -->
+<div class="controls-drawer" id="controlsDrawer">
+  <div class="drawer-handle" onclick="toggleDrawer()">
+    <div class="drawer-handle-bar"></div>
+    <span class="drawer-handle-label">Assumptions</span>
+    <div class="drawer-handle-bar"></div>
+  </div>
+  <div class="controls-grid">
+    <div class="control-group">
+      <div class="control-group-title" data-tooltip="Estimated trips generated by the government center on a typical weekday.">Trip Generation</div>
+      <div class="control-row">
+        <span class="control-label">Government employees</span>
+        <input type="range" class="control-slider" min="3000" max="10000" value="6500" step="100" id="sliderEmployees" oninput="onControlChange()">
+        <span class="control-value" id="valEmployees">6,500</span>
+      </div>
+      <div class="control-row">
+        <span class="control-label">Daily visitors</span>
+        <input type="range" class="control-slider" min="0" max="5000" value="1500" step="100" id="sliderVisitors" oninput="onControlChange()">
+        <span class="control-value" id="valVisitors">1,500</span>
+      </div>
+      <div class="control-row">
+        <span class="control-label" data-tooltip="Percentage of daily trips occurring during the peak hour (e.g., morning rush).">Peak-hour concentration</span>
+        <input type="range" class="control-slider" min="30" max="80" value="60" step="5" id="sliderPeakConc" oninput="onControlChange()">
+        <span class="control-value" id="valPeakConc">60%</span>
+      </div>
+      <div class="control-row">
+        <span class="control-label" data-tooltip="Assumed value of time per commuter, used to calculate Annual Economic Cost.">Economic cost/hr (₱)</span>
+        <input type="range" class="control-slider" min="50" max="300" value="120" step="10" id="sliderCost" oninput="onControlChange()">
+        <span class="control-value" id="valCost">₱120</span>
+      </div>
+    </div>
+    <div class="control-group">
+      <div class="control-group-title" data-tooltip="How people choose to travel to the center. Walk share is calculated automatically as the remainder.">Mode Split</div>
+      <div class="control-row">
+        <span class="control-label">% by private car</span>
+        <input type="range" class="control-slider" min="5" max="70" value="35" step="1" id="sliderCar" oninput="onModeSplitChange()">
+        <span class="control-value" id="valCar">35%</span>
+      </div>
+      <div class="control-row">
+        <span class="control-label">% by motorbike</span>
+        <input type="range" class="control-slider" min="5" max="60" value="40" step="1" id="sliderMotorbike" oninput="onModeSplitChange()">
+        <span class="control-value" id="valMotorbike">40%</span>
+      </div>
+      <div class="control-row">
+        <span class="control-label">% by tricycle/PUV</span>
+        <input type="range" class="control-slider" min="0" max="50" value="20" step="1" id="sliderTricycle" oninput="onModeSplitChange()">
+        <span class="control-value" id="valTricycle">20%</span>
+      </div>
+      <div class="control-row">
+        <span class="control-label">Walking (remainder)</span>
+        <span class="control-value" id="valWalk" style="color:var(--sage)">5%</span>
+      </div>
+      <div class="control-row">
+        <span class="control-label" data-tooltip="Average number of people per private car. Higher values reduce vehicle trips.">Avg car occupancy</span>
+        <input type="range" class="control-slider" min="10" max="25" value="13" step="1" id="sliderOccupancy" oninput="onControlChange()">
+        <span class="control-value" id="valOccupancy">1.3</span>
+      </div>
+    </div>
+    <div class="control-group">
+      <div class="control-group-title" data-tooltip="Constraints for Path 1 (ORC). If parking is full, extra trips create massive gridlock trying to enter.">ORC Supply</div>
+      <div class="control-row">
+        <span class="control-label">Parking supply (ORC)</span>
+        <input type="range" class="control-slider" min="200" max="2000" value="800" step="50" id="sliderParking" oninput="onControlChange()">
+        <span class="control-value" id="valParking">800</span>
+      </div>
+    </div>
+    <div class="control-group">
+      <div class="control-group-title" data-tooltip="Design assumptions for the Landas Township concept (Path 2) which absorbs trips internally.">Landas Design</div>
+      <div class="control-row">
+        <span class="control-label" data-tooltip="Target percentage of government employees to be housed within the new township.">Capture rate</span>
+        <input type="range" class="control-slider" min="0" max="100" value="60" step="5" id="sliderCapture" oninput="onControlChange()">
+        <span class="control-value" id="valCapture">60%</span>
+      </div>
+      <div class="control-row">
+        <span class="control-label" data-tooltip="Maximum capacity based on the selected density for Zone A.">Capture ceiling</span>
+        <span class="control-value" id="valCapCeiling" style="font-size:9px;color:var(--sage-muted)">—</span>
+      </div>
+      <div class="control-row">
+        <span class="control-label" data-tooltip="Density model for the residential area. Dense means more people can live within walking distance.">Zone A option</span>
+        <button class="toggle-btn active" id="toggleZoneA" onclick="toggleZoneA()">Dense (5,973)</button>
+      </div>
+      <div class="control-row">
+        <span class="control-label" data-tooltip="Whether the Ministry of Public Works connector roads are built to distribute traffic.">MPW connector roads</span>
+        <button class="toggle-btn active" id="toggleMPW" onclick="toggleMPW()">On</button>
+      </div>
+      <div class="control-row">
+        <span class="control-label" data-tooltip="Of the people living in the township, what percentage will choose walking or biking instead of driving.">Walk/bike share (15-min shed)</span>
+        <input type="range" class="control-slider" min="0" max="95" value="75" step="5" id="sliderWalkBike" oninput="onControlChange()">
+        <span class="control-value" id="valWalkBike">75%</span>
+      </div>
+    </div>
+    <div class="control-group">
+      <div class="control-group-title">Parang Setup</div>
+      <div class="control-row" style="justify-content: center; margin-top: 5px;">
+        <button id="btnDrawRoad" class="tab-btn" onclick="toggleDrawMode()" style="width: 100%;">Draw Proposed Road</button>
+      </div>
+      <div class="control-row" id="drawTip" style="display:none; justify-content:center; text-align:center; font-size:10px; color:var(--sage); margin-top:5px;">
+        Click and drag on the Parang map to sketch.
+      </div>
+    </div>
+  </div>
+</div>
+<img id="overlayImg" src="data/landas-overlay.png" style="display:none;">
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// GLOBAL STATE
+// ═══════════════════════════════════════════════════════════
+const STATE = {
+  employees: 6500, visitors: 1500, carShare: 0.35, motorbikeShare: 0.40,
+  tricycleShare: 0.20, walkShare: 0.05, occupancy: 1.3, peakConc: 0.60,
+  parkingSupply: 800, captureRate: 0.60, zoneADense: true, mpwOn: true,
+  walkBikeShare: 0.75, timeMin: 450, playing: false, printMode: false,
+  drawerOpen: false, sidebarOpen: false, activeTab: 'traffic',
+  costPerHour: 120
+};
+
+const ZONE_A_BASE = 2791, ZONE_A_DENSE = 5973;
+const ROAD_CAPACITY = { primary: 1800, secondary: 1200, tertiary: 800, trunk: 1800, trunk_link: 900, residential: 400, service: 300, unclassified: 500, footway: 0, path: 0, track: 0, proposed: 400 };
+const GATE_CAPACITY = 750;
+const PCU = { car: 1.0, motorbike: 0.4, tricycle: 0.6 };
+
+let orcCtx, parangCtx, orcW, orcH, parangW, parangH;
+let animFrame, playInterval;
+let orcProjected = { projected: [] }, parangProjected = { projected: [] };
+let orcParticles = [], parangParticles = [];
+let orcNetworkStats = {}, parangNetworkStats = {};
+let orcResults = {}, parangResults = {};
+
+let drawModeOn = false;
+let currentDrawLine = [];
+
+// ═══════════════════════════════════════════════════════════
+// PROJECTION
+// ═══════════════════════════════════════════════════════════
+function projectRoads(roadData, canvas) {
+  const b = roadData.bounds;
+  const midLat = (b.minLat + b.maxLat) / 2;
+  const cosML = Math.cos(midLat * Math.PI / 180);
+  const pad = 40;
+  const w = canvas.width - pad * 2;
+  const h = canvas.height - pad * 2;
+  const lonSpan = b.maxLon - b.minLon;
+  const latSpan = b.maxLat - b.minLat;
+  const scaleX = w / (lonSpan * cosML);
+  const scaleY = h / latSpan;
+  const scale = Math.min(scaleX, scaleY);
+
+  const projW = lonSpan * cosML * scale;
+  const projH = latSpan * scale;
+  const offX = pad + (w - projW) / 2;
+  const offY = pad + (h - projH) / 2;
+
+  function proj(lon, lat) {
+    return [
+      offX + (lon - b.minLon) * cosML * scale,
+      offY + (b.maxLat - lat) * scale
+    ];
+  }
+  function unproj(x, y) {
+    return [
+      b.minLon + (x - offX) / (cosML * scale),
+      b.maxLat - (y - offY) / scale
+    ];
+  }
+  const projected = roadData.roads.map(r => ({
+    type: r.type,
+    pts: r.pts.map(p => proj(p[0], p[1])),
+    rawPts: r.pts,
+    length: 0, vc: 0, pcu: 0
+  }));
+  // Compute segment lengths
+  projected.forEach(r => {
+    let len = 0;
+    for (let i = 1; i < r.pts.length; i++) {
+      const dx = r.pts[i][0] - r.pts[i-1][0];
+      const dy = r.pts[i][1] - r.pts[i-1][1];
+      len += Math.sqrt(dx*dx + dy*dy);
+    }
+    r.length = len;
+  });
+  return { projected, proj, unproj, scale, bounds: b, midLat, cosML };
+}
+
+// ═══════════════════════════════════════════════════════════
+// NETWORK ANALYSIS
+// ═══════════════════════════════════════════════════════════
+function analyzeNetwork(roads) {
+  let totalLen = 0, pedLen = 0;
+  const typeLens = {};
+  roads.forEach(r => {
+    const len = computeGeoLength(r.rawPts);
+    totalLen += len;
+    if (r.type === 'footway' || r.type === 'path' || r.type === 'proposed') pedLen += len;
+    typeLens[r.type] = (typeLens[r.type] || 0) + len;
+  });
+  return { totalLen, pedLen, pedShare: totalLen > 0 ? pedLen / totalLen : 0, typeLens };
+}
+
+function computeGeoLength(pts) {
+  let len = 0;
+  for (let i = 1; i < pts.length; i++) {
+    const dlat = (pts[i][1] - pts[i-1][1]) * 111320;
+    const dlon = (pts[i][0] - pts[i-1][0]) * 111320 * Math.cos(pts[i][1] * Math.PI / 180);
+    len += Math.sqrt(dlat*dlat + dlon*dlon);
+  }
+  return len;
+}
+
+// ═══════════════════════════════════════════════════════════
+// TRAFFIC MODEL
+// ═══════════════════════════════════════════════════════════
+function computeTimeFactor(timeMin) {
+  // timeMin: minutes since midnight (300=5:00, 1200=20:00)
+  // AM peak 7:30-8:30 (450-510), PM peak 16:30-17:30 (990-1050)
+  const amCenter = 480, pmCenter = 1020;
+  const sigma = 30;
+  const amFactor = Math.exp(-0.5 * Math.pow((timeMin - amCenter) / sigma, 2));
+  const pmFactor = Math.exp(-0.5 * Math.pow((timeMin - pmCenter) / sigma, 2));
+  const baseFactor = 0.15;
+  return baseFactor + 0.85 * Math.max(amFactor, pmFactor);
+}
+
+function runTrafficModel() {
+  const S = STATE;
+  const timeFactor = computeTimeFactor(S.timeMin);
+
+  // 1. Trip generation
+  const peakPersonTrips = (S.employees + S.visitors * 0.5) * S.peakConc * timeFactor;
+
+  // 2. Mode split → vehicle trips
+  const carPersons = peakPersonTrips * S.carShare;
+  const motoPersons = peakPersonTrips * S.motorbikeShare;
+  const triPersons = peakPersonTrips * S.tricycleShare;
+  const walkPersons = peakPersonTrips * S.walkShare;
+
+  const carVehicles = carPersons / S.occupancy;
+  const motoVehicles = motoPersons;
+  const triVehicles = triPersons / 1.5;
+
+  // 3. PCU
+  const carPCU = carVehicles * PCU.car;
+  const motoPCU = motoVehicles * PCU.motorbike;
+  const triPCU = triVehicles * PCU.tricycle;
+  const totalPCU = carPCU + motoPCU + triPCU;
+
+  // ─── ORC ───
+  // Gate throughput: assume 3 gates
+  const numGates = 3;
+  const gateCapPerGate = GATE_CAPACITY;
+  const totalGateCap = numGates * gateCapPerGate;
+  const gateVC = totalPCU / totalGateCap;
+  const gateDelay = freeFlowTime(10) * (1 + 0.15 * Math.pow(Math.max(gateVC, 0), 4)); // BPR
+
+  // Network loading for ORC
+  const orcRoadResults = distributeAndCongest(orcProjected.projected, totalPCU, false);
+
+  // Parking penalty
+  const parkingDemand = carVehicles;
+  let parkingCircle = 0;
+  if (parkingDemand > S.parkingSupply) {
+    parkingCircle = 5 * Math.min(3, parkingDemand / S.parkingSupply);
+  }
+  const parkingDeficitOrc = Math.max(0, Math.round(parkingDemand - S.parkingSupply));
+
+  // Avg door-to-desk ORC: base 15 min + gate delay + parking + congestion avg
+  const avgCongestionOrc = orcRoadResults.avgDelay;
+  const dtdOrc = 15 + gateDelay + parkingCircle + avgCongestionOrc;
+
+  // Person-hours lost (above baseline 15 min)
+  const excessMinOrc = (dtdOrc - 15) * peakPersonTrips;
+  const personHoursOrc = excessMinOrc / 60;
+  const carFreeOrc = S.walkShare * 100;
+  const annualCostOrc = personHoursOrc * STATE.costPerHour * 250 / 1e6;
+
+  orcResults = {
+    totalPCU: Math.round(totalPCU),
+    dtd: dtdOrc.toFixed(1),
+    personHoursLost: Math.round(personHoursOrc),
+    parkingDeficit: parkingDeficitOrc,
+    carFree: carFreeOrc.toFixed(0),
+    annualCost: annualCostOrc.toFixed(1),
+    gateVC, peakPersonTrips, carVehicles, parkingCircle
+  };
+
+  // ─── PARANG ───
+  const zoneAUnits = S.zoneADense ? ZONE_A_DENSE : ZONE_A_BASE;
+  const capCeiling = Math.min(90, Math.round(zoneAUnits / S.employees * 100));
+  const effectiveCapture = Math.min(S.captureRate, capCeiling / 100);
+  const capturedResidents = Math.round(S.employees * effectiveCapture);
+
+  // Captured residents walk/bike — remaining drive
+  const nonCaptured = peakPersonTrips * (1 - effectiveCapture);
+  const capturedTrips = peakPersonTrips * effectiveCapture;
+  const walkBikeTrips = capturedTrips * S.walkBikeShare;
+  const capturedVehicleTrips = capturedTrips * (1 - S.walkBikeShare);
+
+  const parangCarPCU = (nonCaptured * S.carShare / S.occupancy + capturedVehicleTrips * S.carShare / S.occupancy) * PCU.car;
+  const parangMotoPCU = (nonCaptured * S.motorbikeShare + capturedVehicleTrips * S.motorbikeShare) * PCU.motorbike;
+  const parangTriPCU = (nonCaptured * S.tricycleShare / 1.5 + capturedVehicleTrips * S.tricycleShare / 1.5) * PCU.tricycle;
+  const parangTotalPCU = parangCarPCU + parangMotoPCU + parangTriPCU;
+
+  const parangRoadResults = distributeAndCongest(parangProjected.projected, parangTotalPCU, S.mpwOn);
+
+  // No gates, no parking penalty (decentralized)
+  const dtdParang = 8 + parangRoadResults.avgDelay; // base shorter — 15-min walk
+  const excessMinParang = Math.max(0, (dtdParang - 8)) * nonCaptured;
+  const personHoursParang = excessMinParang / 60;
+  const parangCarFree = ((walkBikeTrips + peakPersonTrips * S.walkShare) / peakPersonTrips * 100);
+  const annualCostParang = personHoursParang * STATE.costPerHour * 250 / 1e6;
+
+  parangResults = {
+    totalPCU: Math.round(parangTotalPCU),
+    dtd: dtdParang.toFixed(1),
+    personHoursLost: Math.round(personHoursParang),
+    parkingDeficit: 0,
+    carFree: Math.min(99, parangCarFree).toFixed(0),
+    annualCost: annualCostParang.toFixed(1),
+    capCeiling, effectiveCapture, walkBikeTrips, capturedResidents,
+    ghostTrips: walkBikeTrips, peakPersonTrips
+  };
+
+  updateKPIs();
+  updateCaptureCeiling(capCeiling);
+}
+
+function freeFlowTime(distKm) {
+  return distKm / 30 * 60; // minutes at 30km/h
+}
+
+function distributeAndCongest(roads, totalPCU, mpwOn) {
+  // Weight PCU by road class capacity share
+  const vehicleRoads = roads.filter(r => (ROAD_CAPACITY[r.type] || 0) > 0);
+  let totalCapWeightedLen = 0;
+  vehicleRoads.forEach(r => {
+    const cap = ROAD_CAPACITY[r.type] || 400;
+    r.capWeight = cap * r.length;
+    totalCapWeightedLen += r.capWeight;
+  });
+
+  let maxVC = 0, totalDelay = 0, roadCount = 0;
+  vehicleRoads.forEach(r => {
+    const share = totalCapWeightedLen > 0 ? r.capWeight / totalCapWeightedLen : 0;
+    r.pcu = totalPCU * share * (r.length > 10 ? 1 : 0.3);
+    const cap = ROAD_CAPACITY[r.type] || 400;
+    r.vc = r.pcu / (cap * 0.5 + 1); // per-corridor capacity fraction
+    // BPR delay
+    const t0 = r.length / 8; // free flow time proportional to pixel length
+    const delay = t0 * 0.15 * Math.pow(Math.max(r.vc, 0), 4);
+    totalDelay += delay;
+    roadCount++;
+    if (r.vc > maxVC) maxVC = r.vc;
+  });
+
+  // Mark non-vehicle roads
+  roads.forEach(r => {
+    if ((ROAD_CAPACITY[r.type] || 0) === 0) {
+      r.pcu = 0;
+      r.vc = 0;
+    }
+  });
+
+  return {
+    avgDelay: roadCount > 0 ? totalDelay / roadCount : 0,
+    maxVC
+  };
+}
+
+// ═══════════════════════════════════════════════════════════
+// KPI UPDATES
+// ═══════════════════════════════════════════════════════════
+function updateKPIs() {
+  const o = orcResults, p = parangResults;
+  document.getElementById('kpiOrcPCU').textContent = o.totalPCU.toLocaleString();
+  document.getElementById('kpiParangPCU').textContent = p.totalPCU.toLocaleString();
+  document.getElementById('kpiDeltaPCU').textContent = `↓ ${Math.round((1 - p.totalPCU/o.totalPCU)*100)}%`;
+
+  document.getElementById('kpiOrcDTD').textContent = o.dtd;
+  document.getElementById('kpiParangDTD').textContent = p.dtd;
+  document.getElementById('kpiDeltaDTD').textContent = `↓ ${(o.dtd - p.dtd).toFixed(0)} min`;
+
+  document.getElementById('kpiOrcPHL').textContent = o.personHoursLost.toLocaleString();
+  document.getElementById('kpiParangPHL').textContent = p.personHoursLost.toLocaleString();
+  document.getElementById('kpiDeltaPHL').textContent = `↓ ${Math.round((1 - p.personHoursLost/(o.personHoursLost||1))*100)}%`;
+
+  document.getElementById('kpiOrcParking').textContent = o.parkingDeficit.toLocaleString();
+  document.getElementById('kpiParangParking').textContent = p.parkingDeficit.toLocaleString();
+  document.getElementById('kpiDeltaParking').textContent = o.parkingDeficit > 0 ? `${o.parkingDeficit} cars circling` : '—';
+
+  document.getElementById('kpiOrcCarFree').textContent = o.carFree + '%';
+  document.getElementById('kpiParangCarFree').textContent = p.carFree + '%';
+  document.getElementById('kpiDeltaCarFree').textContent = `↑ ${(p.carFree - o.carFree).toFixed(0)}pp`;
+
+  document.getElementById('kpiOrcCost').textContent = '₱' + o.annualCost;
+  document.getElementById('kpiParangCost').textContent = '₱' + p.annualCost;
+  document.getElementById('kpiDeltaCost').textContent = `Saves ₱${(o.annualCost - p.annualCost).toFixed(1)}M/yr`;
+
+}
+
+function updateCaptureCeiling(ceil) {
+  document.getElementById('valCapCeiling').textContent = `Ceiling: ${ceil}%`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// PARTICLE SYSTEM
+// ═══════════════════════════════════════════════════════════
+class Particle {
+  constructor(road, type, panelType) {
+    this.road = road;
+    this.type = type; // 'car', 'walk', 'ghost'
+    this.panelType = panelType;
+    this.progress = Math.random();
+    this.speed = 0.002 + Math.random() * 0.003;
+    this.alive = true;
+    this.opacity = type === 'ghost' ? 0.5 : 0.9;
+    this.size = type === 'walk' ? 1.5 : (type === 'ghost' ? 2 : 2.5);
+    this.queueing = false;
+    this.orbiting = false;
+    this.orbitAngle = Math.random() * Math.PI * 2;
+  }
+
+  update(dt) {
+    if (this.type === 'ghost') {
+      this.opacity -= 0.008;
+      this.progress += this.speed * 0.5;
+      if (this.opacity <= 0) this.alive = false;
+      return;
+    }
+    if (this.orbiting) {
+      this.orbitAngle += 0.02;
+      return;
+    }
+    // Speed inversely proportional to V/C
+    const vcFactor = Math.max(0.1, 1 - this.road.vc * 0.6);
+    // Queue at gates
+    if (this.panelType === 'orc' && this.road.vc > 1.0 && this.progress > 0.85) {
+      this.queueing = true;
+      this.speed = 0.0003;
+    } else {
+      this.queueing = false;
+    }
+    this.progress += this.speed * vcFactor * dt;
+    if (this.progress >= 1) {
+      if (this.queueing) {
+        this.progress = 0.85 + Math.random() * 0.1;
+      } else {
+        this.progress = 0;
+      }
+    }
+  }
+
+  getPosition() {
+    if (this.orbiting) {
+      const cx = this.road.pts[Math.floor(this.road.pts.length/2)][0];
+      const cy = this.road.pts[Math.floor(this.road.pts.length/2)][1];
+      return [cx + Math.cos(this.orbitAngle) * 20, cy + Math.sin(this.orbitAngle) * 15];
+    }
+    const pts = this.road.pts;
+    if (pts.length < 2) return pts[0] || [0,0];
+    // Find position along path
+    let totalLen = 0;
+    const segs = [];
+    for (let i = 1; i < pts.length; i++) {
+      const dx = pts[i][0] - pts[i-1][0], dy = pts[i][1] - pts[i-1][1];
+      const l = Math.sqrt(dx*dx + dy*dy);
+      segs.push(l);
+      totalLen += l;
+    }
+    let target = this.progress * totalLen, acc = 0;
+    for (let i = 0; i < segs.length; i++) {
+      if (acc + segs[i] >= target) {
+        const t = (target - acc) / segs[i];
+        return [
+          pts[i][0] + (pts[i+1][0] - pts[i][0]) * t,
+          pts[i][1] + (pts[i+1][1] - pts[i][1]) * t
+        ];
+      }
+      acc += segs[i];
+    }
+    return pts[pts.length - 1];
+  }
+}
+
+function refreshParticles() {
+  const maxPerPanel = 1500;
+  const tripsPerParticle = 25;
+
+  // ORC particles
+  orcParticles = [];
+  const orcVehicleRoads = orcProjected.projected.filter(r => r.vc > 0 && r.length > 15);
+  const orcTotalTrips = orcResults.peakPersonTrips || 1000;
+  const orcParticleCount = Math.min(maxPerPanel, Math.round(orcTotalTrips / tripsPerParticle));
+  for (let i = 0; i < orcParticleCount; i++) {
+    const road = orcVehicleRoads[Math.floor(Math.random() * orcVehicleRoads.length)];
+    if (road) {
+      const p = new Particle(road, 'car', 'orc');
+      // Some particles orbit for parking penalty
+      if (orcResults.parkingDeficit > 0 && Math.random() < 0.1) {
+        p.orbiting = true;
+      }
+      orcParticles.push(p);
+    }
+  }
+
+  // Parang particles
+  parangParticles = [];
+  const parangVehicleRoads = parangProjected.projected.filter(r => r.vc > 0 && r.length > 15);
+  const parangPedRoads = parangProjected.projected.filter(r => (r.type === 'path' || r.type === 'residential') && r.length > 15);
+  const parangTotalTrips = parangResults.peakPersonTrips || 1000;
+
+  // Vehicle particles (reduced by capture)
+  const vehicleParticleCount = Math.min(maxPerPanel * 0.4, Math.round(parangResults.totalPCU / tripsPerParticle));
+  for (let i = 0; i < vehicleParticleCount; i++) {
+    const road = parangVehicleRoads[Math.floor(Math.random() * parangVehicleRoads.length)];
+    if (road) parangParticles.push(new Particle(road, 'car', 'parang'));
+  }
+
+  // Walk/bike particles
+  const walkParticleCount = Math.min(maxPerPanel * 0.3, Math.round((parangResults.walkBikeTrips || 0) / tripsPerParticle));
+  for (let i = 0; i < walkParticleCount; i++) {
+    const road = parangPedRoads.length > 0
+      ? parangPedRoads[Math.floor(Math.random() * parangPedRoads.length)]
+      : parangVehicleRoads[Math.floor(Math.random() * parangVehicleRoads.length)];
+    if (road) parangParticles.push(new Particle(road, 'walk', 'parang'));
+  }
+
+  // Ghost particles — "trips that never happen"
+  const ghostCount = Math.min(maxPerPanel * 0.15, Math.round((parangResults.ghostTrips || 0) / tripsPerParticle * 0.3));
+  for (let i = 0; i < ghostCount; i++) {
+    const road = parangVehicleRoads[Math.floor(Math.random() * parangVehicleRoads.length)];
+    if (road) parangParticles.push(new Particle(road, 'ghost', 'parang'));
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// DRAWING
+// ═══════════════════════════════════════════════════════════
+function vcColor(vc) {
+  if (vc > 1.2) return '#8B1A1A';
+  if (vc > 0.9) return '#D94040';
+  if (vc > 0.6) return '#C8972A';
+  return '#5A7A5A';
+}
+
+function roadWidth(type) {
+  switch(type) {
+    case 'primary': case 'trunk': return 3.5;
+    case 'secondary': case 'trunk_link': return 2.8;
+    case 'tertiary': return 2.2;
+    case 'residential': case 'unclassified': return 1.5;
+    case 'service': return 1.0;
+    case 'footway': case 'path': return 0.7;
+    default: return 1.0;
+  }
+}
+
+function drawRoads(ctx, projected, w, h) {
+  ctx.clearRect(0, 0, w, h);
+
+  // Background
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, '#0D2217');
+  grad.addColorStop(1, '#142E20');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+
+  // Overlay for Parang
+  if (projected === parangProjected.projected && window.sitesBriefingData && window.sitesBriefingData.overlayBox) {
+    const img = document.getElementById('overlayImg');
+    if (img && img.complete && img.naturalWidth !== 0) {
+      const b = window.sitesBriefingData.overlayBox;
+      const tl = parangProjected.proj(b.W, b.N);
+      const br = parangProjected.proj(b.E, b.S);
+      ctx.globalAlpha = 0.5;
+      ctx.drawImage(img, tl[0], tl[1], br[0] - tl[0], br[1] - tl[1]);
+      ctx.globalAlpha = 1.0;
+    }
+  }
+
+  // Roads
+  const now = Date.now();
+  projected.forEach(road => {
+    if (road.pts.length < 2) return;
+    ctx.beginPath();
+    ctx.moveTo(road.pts[0][0], road.pts[0][1]);
+    for (let i = 1; i < road.pts.length; i++) {
+      ctx.lineTo(road.pts[i][0], road.pts[i][1]);
+    }
+    const vc = road.vc || 0;
+    let color = vcColor(vc);
+    let width = roadWidth(road.type);
+
+    // Pulse for extreme congestion
+    if (vc > 1.2) {
+      const pulse = 0.5 + 0.5 * Math.sin(now * 0.005);
+      ctx.globalAlpha = 0.4 + pulse * 0.6;
+    } else {
+      ctx.globalAlpha = road.type === 'footway' || road.type === 'path' ? 0.4 : 0.7;
+    }
+    // Footways/paths in different color
+    if (road.type === 'footway' || road.type === 'path') {
+      color = 'rgba(184,198,184,0.5)';
+    }
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  });
+}
+
+function drawIsochrones(ctx, projData, panelType) {
+  // Calculate centroid of new center polygon
+  const sData = window.sitesData || window.sitesBriefingData;
+  if (!sData || !sData.newCenter || sData.newCenter.length === 0) return;
+
+  const centerPoly = sData.newCenter;
+  let cx = 0, cy = 0;
+  centerPoly.forEach(p => { cx += p[0]; cy += p[1]; });
+  cx /= centerPoly.length;
+  cy /= centerPoly.length;
+
+  const centerPx = projData.proj(cx, cy);
+
+  // Approximate meters per pixel
+  const mPerDegLat = 111320;
+  const mPerDegLon = mPerDegLat * projData.cosML;
+  const mPerPx = mPerDegLon * (projData.bounds.maxLon - projData.bounds.minLon) / (projData.scale * projData.cosML * (projData.bounds.maxLon - projData.bounds.minLon) / (projData.bounds.maxLon - projData.bounds.minLon));
+  // Simpler: compute pixel distance for 400m
+  const testPt = projData.proj(cx + 400 / mPerDegLon, cy);
+  const px400m = Math.abs(testPt[0] - centerPx[0]);
+  const px800m = px400m * 2;
+  const px1200m = px400m * 3;
+
+  const rings = [
+    { r: px400m, color: 'rgba(90,122,90,0.25)', label: '5 min' },
+    { r: px800m, color: 'rgba(200,151,42,0.18)', label: '10 min' },
+    { r: px1200m, color: 'rgba(242,237,226,0.12)', label: '15 min' }
+  ];
+
+  rings.reverse().forEach(ring => {
+    ctx.beginPath();
+    ctx.arc(centerPx[0], centerPx[1], ring.r, 0, Math.PI * 2);
+    ctx.fillStyle = ring.color;
+    ctx.fill();
+    ctx.strokeStyle = ring.color.replace(/[\d.]+\)/, '0.5)');
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Label
+    ctx.fillStyle = 'rgba(242,237,226,0.6)';
+    ctx.font = '9px "Avenir Next", Helvetica, sans-serif';
+    ctx.fillText(ring.label, centerPx[0] + ring.r + 4, centerPx[1] - 4);
+  });
+
+  // Draw New Center polygon outlines
+  if (panelType === 'parang') {
+    const polys = [centerPoly];
+    if (sData.newCenter2 && sData.newCenter2.length > 0) {
+      polys.push(sData.newCenter2);
+    }
+
+    polys.forEach((poly, idx) => {
+      ctx.beginPath();
+      const firstPt = projData.proj(poly[0][0], poly[0][1]);
+      ctx.moveTo(firstPt[0], firstPt[1]);
+      for (let i = 1; i < poly.length; i++) {
+        const pt = projData.proj(poly[i][0], poly[i][1]);
+        ctx.lineTo(pt[0], pt[1]);
+      }
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(200,151,42,0.15)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(200,151,42,0.5)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Label only the first one
+      if (idx === 0) {
+        ctx.fillStyle = 'rgba(200,151,42,0.8)';
+        ctx.font = 'bold 10px "Avenir Next", Helvetica, sans-serif';
+        ctx.fillText('New Gov Center', centerPx[0] - 40, centerPx[1] - 8);
+      }
+    });
+  }
+}
+
+function drawOrcAnnotations(ctx, projData) {
+  // Draw ORC boundary hint (compound area)
+  const b = projData.bounds;
+  const center = projData.proj((b.minLon+b.maxLon)/2, (b.minLat+b.maxLat)/2);
+
+  // Gate indicators
+  const gatePositions = [
+    projData.proj(b.minLon + (b.maxLon-b.minLon)*0.3, b.maxLat - (b.maxLat-b.minLat)*0.1),
+    projData.proj(b.maxLon - (b.maxLon-b.minLon)*0.15, (b.minLat+b.maxLat)/2),
+    projData.proj(b.minLon + (b.maxLon-b.minLon)*0.5, b.minLat + (b.maxLat-b.minLat)*0.1)
+  ];
+
+  gatePositions.forEach((gp, i) => {
+    ctx.beginPath();
+    ctx.arc(gp[0], gp[1], 6, 0, Math.PI * 2);
+    ctx.fillStyle = orcResults.gateVC > 1 ? 'rgba(217,64,64,0.7)' : 'rgba(200,151,42,0.5)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(242,237,226,0.5)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(242,237,226,0.7)';
+    ctx.font = '8px "Avenir Next", Helvetica, sans-serif';
+    ctx.fillText(`Gate ${i+1}`, gp[0] + 8, gp[1] + 3);
+  });
+
+  // Queue visualization at gates
+  if (orcResults.gateVC > 1) {
+    const queueLen = Math.min(60, (orcResults.gateVC - 1) * 40);
+    gatePositions.forEach(gp => {
+      ctx.beginPath();
+      ctx.moveTo(gp[0], gp[1]);
+      ctx.lineTo(gp[0] - queueLen, gp[1]);
+      ctx.strokeStyle = 'rgba(217,64,64,0.5)';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+    });
+  }
+
+}
+
+function drawParticles(ctx, particles) {
+  particles.forEach(p => {
+    if (!p.alive) return;
+    const pos = p.getPosition();
+    ctx.beginPath();
+    ctx.arc(pos[0], pos[1], p.size, 0, Math.PI * 2);
+
+    if (p.type === 'car') {
+      const vc = p.road.vc || 0;
+      if (vc > 0.9) ctx.fillStyle = `rgba(217,64,64,${p.opacity})`;
+      else if (vc > 0.6) ctx.fillStyle = `rgba(200,151,42,${p.opacity})`;
+      else ctx.fillStyle = `rgba(232,168,56,${p.opacity * 0.8})`;
+    } else if (p.type === 'walk') {
+      ctx.fillStyle = `rgba(184,198,184,${p.opacity})`;
+    } else if (p.type === 'ghost') {
+      ctx.fillStyle = `rgba(200,151,42,${p.opacity * 0.5})`;
+    }
+    ctx.fill();
+
+    // Glow for congested vehicles
+    if (p.type === 'car' && p.road.vc > 0.9) {
+      ctx.beginPath();
+      ctx.arc(pos[0], pos[1], p.size + 3, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(217,64,64,${p.opacity * 0.15})`;
+      ctx.fill();
+    }
+  });
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// ANIMATION LOOP
+// ═══════════════════════════════════════════════════════════
+let lastFrameTime = 0;
+function animate(timestamp) {
+  const dt = lastFrameTime ? Math.min((timestamp - lastFrameTime) / 16, 3) : 1;
+  lastFrameTime = timestamp;
+
+  // Update particles
+  orcParticles.forEach(p => p.update(dt));
+  parangParticles.forEach(p => p.update(dt));
+
+  // Remove dead ghosts and respawn
+  parangParticles = parangParticles.filter(p => p.alive);
+
+  // Draw ORC
+  drawRoads(orcCtx, orcProjected.projected, orcW, orcH);
+  drawOrcAnnotations(orcCtx, orcProjected);
+  if (STATE.activeTab === 'traffic' || STATE.activeTab === 'safe') {
+    drawIsochrones(orcCtx, orcProjected, 'orc');
+  }
+  drawParticles(orcCtx, orcParticles);
+
+  // Draw Parang
+  drawRoads(parangCtx, parangProjected.projected, parangW, parangH);
+  drawIsochrones(parangCtx, parangProjected, 'parang');
+  drawParticles(parangCtx, parangParticles);
+
+  if (drawModeOn && currentDrawLine.length > 1) {
+    parangCtx.beginPath();
+    const startPt = parangProjected.proj(currentDrawLine[0][0], currentDrawLine[0][1]);
+    parangCtx.moveTo(startPt[0], startPt[1]);
+    for (let i = 1; i < currentDrawLine.length; i++) {
+      const pt = parangProjected.proj(currentDrawLine[i][0], currentDrawLine[i][1]);
+      parangCtx.lineTo(pt[0], pt[1]);
+    }
+    parangCtx.strokeStyle = 'rgba(255, 200, 50, 0.8)';
+    parangCtx.lineWidth = 2;
+    parangCtx.setLineDash([5, 5]);
+    parangCtx.stroke();
+    parangCtx.setLineDash([]);
+  }
+
+
+  animFrame = requestAnimationFrame(animate);
+}
+
+// ═══════════════════════════════════════════════════════════
+// CONTROLS
+// ═══════════════════════════════════════════════════════════
+function onControlChange() {
+  STATE.employees = +document.getElementById('sliderEmployees').value;
+  STATE.visitors = +document.getElementById('sliderVisitors').value;
+  STATE.peakConc = +document.getElementById('sliderPeakConc').value / 100;
+  STATE.occupancy = +document.getElementById('sliderOccupancy').value / 10;
+  STATE.parkingSupply = +document.getElementById('sliderParking').value;
+  STATE.captureRate = +document.getElementById('sliderCapture').value / 100;
+  STATE.walkBikeShare = +document.getElementById('sliderWalkBike').value / 100;
+  STATE.costPerHour = +document.getElementById('sliderCost').value;
+
+
+  // Update display values
+  document.getElementById('valEmployees').textContent = STATE.employees.toLocaleString();
+  document.getElementById('valVisitors').textContent = STATE.visitors.toLocaleString();
+  document.getElementById('valPeakConc').textContent = Math.round(STATE.peakConc * 100) + '%';
+  document.getElementById('valCost').textContent = '₱' + STATE.costPerHour;
+  document.getElementById('valOccupancy').textContent = STATE.occupancy.toFixed(1);
+  document.getElementById('valParking').textContent = STATE.parkingSupply.toLocaleString();
+  document.getElementById('valCapture').textContent = Math.round(STATE.captureRate * 100) + '%';
+  document.getElementById('valWalkBike').textContent = Math.round(STATE.walkBikeShare * 100) + '%';
+
+  runTrafficModel();
+  refreshParticles();
+  saveState();
+}
+
+function onModeSplitChange() {
+  let car = +document.getElementById('sliderCar').value;
+  let moto = +document.getElementById('sliderMotorbike').value;
+  let tri = +document.getElementById('sliderTricycle').value;
+
+  // Auto-normalize: cap sum at 95, walking is remainder
+  const total = car + moto + tri;
+  if (total > 95) {
+    const scale = 95 / total;
+    car = Math.round(car * scale);
+    moto = Math.round(moto * scale);
+    tri = 95 - car - moto;
+    document.getElementById('sliderCar').value = car;
+    document.getElementById('sliderMotorbike').value = moto;
+    document.getElementById('sliderTricycle').value = tri;
+  }
+  const walk = Math.max(0, 100 - car - moto - tri);
+
+  STATE.carShare = car / 100;
+  STATE.motorbikeShare = moto / 100;
+  STATE.tricycleShare = tri / 100;
+  STATE.walkShare = walk / 100;
+
+  document.getElementById('valCar').textContent = car + '%';
+  document.getElementById('valMotorbike').textContent = moto + '%';
+  document.getElementById('valTricycle').textContent = tri + '%';
+  document.getElementById('valWalk').textContent = walk + '%';
+
+  onControlChange();
+}
+
+function toggleZoneA() {
+  STATE.zoneADense = !STATE.zoneADense;
+  const btn = document.getElementById('toggleZoneA');
+  btn.textContent = STATE.zoneADense ? 'Dense (5,973)' : 'Base (2,791)';
+  btn.classList.toggle('active', STATE.zoneADense);
+  onControlChange();
+}
+
+function toggleMPW() {
+  STATE.mpwOn = !STATE.mpwOn;
+  const btn = document.getElementById('toggleMPW');
+  btn.textContent = STATE.mpwOn ? 'On' : 'Off';
+  btn.classList.toggle('active', STATE.mpwOn);
+  onControlChange();
+}
+
+function toggleDrawer() {
+  STATE.drawerOpen = !STATE.drawerOpen;
+  document.getElementById('controlsDrawer').classList.toggle('open', STATE.drawerOpen);
+}
+
+function toggleSidebar() {
+  STATE.sidebarOpen = !STATE.sidebarOpen;
+  document.getElementById('sidebar').classList.toggle('open', STATE.sidebarOpen);
+}
+
+function togglePrint() {
+  STATE.printMode = !STATE.printMode;
+  document.body.classList.toggle('print-mode', STATE.printMode);
+  if (STATE.printMode) {
+    STATE.playing = false;
+    clearInterval(playInterval);
+    document.getElementById('playBtn').innerHTML = '&#9654;';
+  }
+}
+
+function setTab(tab) {
+  STATE.activeTab = tab;
+  document.getElementById('tabTraffic').classList.toggle('active', tab === 'traffic');
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// TIME CONTROLS
+// ═══════════════════════════════════════════════════════════
+function onTimeChange(val) {
+  STATE.timeMin = +val;
+  updateTimeDisplay();
+  runTrafficModel();
+  refreshParticles();
+  saveState();
+}
+
+function updateTimeDisplay() {
+  const h = Math.floor(STATE.timeMin / 60);
+  const m = STATE.timeMin % 60;
+  document.getElementById('timeLabel').textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  document.getElementById('timeSlider').value = STATE.timeMin;
+
+  // Time period label
+  let period = 'Off-peak';
+  if (STATE.timeMin >= 420 && STATE.timeMin <= 540) period = 'AM Peak';
+  else if (STATE.timeMin >= 960 && STATE.timeMin <= 1080) period = 'PM Peak';
+  else if (STATE.timeMin >= 660 && STATE.timeMin <= 840) period = 'Midday';
+  document.getElementById('timeCurveLabel').textContent = period;
+}
+
+function togglePlay() {
+  STATE.playing = !STATE.playing;
+  document.getElementById('playBtn').innerHTML = STATE.playing ? '&#9646;&#9646;' : '&#9654;';
+  if (STATE.playing) {
+    playInterval = setInterval(() => {
+      STATE.timeMin += 5;
+      if (STATE.timeMin > 1200) STATE.timeMin = 300;
+      updateTimeDisplay();
+      runTrafficModel();
+      refreshParticles();
+    }, 1000); // 20-second loop for 900 minutes = ~50ms steps but we do 5-min per second
+  } else {
+    clearInterval(playInterval);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// PRESETS
+// ═══════════════════════════════════════════════════════════
+function applyPreset(name) {
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+
+  if (name === 'conservative') {
+    setSliders({ employees: 5000, visitors: 1000, peakConc: 50, car: 30, moto: 45, tri: 20,
+      occupancy: 15, parking: 1000, capture: 30, zoneADense: false, mpwOn: true, walkBike: 60 });
+    document.getElementById('presetConservative').classList.add('active');
+  } else if (name === 'expected') {
+    setSliders({ employees: 6500, visitors: 1500, peakConc: 60, car: 35, moto: 40, tri: 20,
+      occupancy: 13, parking: 800, capture: 60, zoneADense: true, mpwOn: true, walkBike: 75 });
+    document.getElementById('presetExpected').classList.add('active');
+  } else if (name === 'ambitious') {
+    setSliders({ employees: 8000, visitors: 2500, peakConc: 65, car: 25, moto: 35, tri: 25,
+      occupancy: 16, parking: 600, capture: 80, zoneADense: true, mpwOn: true, walkBike: 90 });
+    document.getElementById('presetAmbitious').classList.add('active');
+  }
+}
+
+function setSliders(v) {
+  document.getElementById('sliderEmployees').value = v.employees;
+  document.getElementById('sliderVisitors').value = v.visitors;
+  document.getElementById('sliderPeakConc').value = v.peakConc;
+  document.getElementById('sliderCar').value = v.car;
+  document.getElementById('sliderMotorbike').value = v.moto;
+  document.getElementById('sliderTricycle').value = v.tri;
+  document.getElementById('sliderOccupancy').value = v.occupancy;
+  document.getElementById('sliderParking').value = v.parking;
+  document.getElementById('sliderCapture').value = v.capture;
+  document.getElementById('sliderWalkBike').value = v.walkBike;
+
+  STATE.zoneADense = v.zoneADense;
+  document.getElementById('toggleZoneA').textContent = v.zoneADense ? 'Dense (5,973)' : 'Base (2,791)';
+  document.getElementById('toggleZoneA').classList.toggle('active', v.zoneADense);
+
+  STATE.mpwOn = v.mpwOn;
+  document.getElementById('toggleMPW').textContent = v.mpwOn ? 'On' : 'Off';
+  document.getElementById('toggleMPW').classList.toggle('active', v.mpwOn);
+
+  onModeSplitChange();
+}
+
+// ═══════════════════════════════════════════════════════════
+// URL STATE / LOCALSTORAGE
+// ═══════════════════════════════════════════════════════════
+function saveState() {
+  const params = new URLSearchParams();
+  params.set('e', STATE.employees);
+  params.set('v', STATE.visitors);
+  params.set('c', Math.round(STATE.carShare * 100));
+  params.set('m', Math.round(STATE.motorbikeShare * 100));
+  params.set('tr', Math.round(STATE.tricycleShare * 100));
+  params.set('oc', Math.round(STATE.occupancy * 10));
+  params.set('pk', Math.round(STATE.peakConc * 100));
+  params.set('ps', STATE.parkingSupply);
+  params.set('cr', Math.round(STATE.captureRate * 100));
+  params.set('za', STATE.zoneADense ? 1 : 0);
+  params.set('mpw', STATE.mpwOn ? 1 : 0);
+  params.set('wb', Math.round(STATE.walkBikeShare * 100));
+  params.set('cph', STATE.costPerHour);
+  params.set('t', STATE.timeMin);
+
+  try {
+    history.replaceState(null, '', '#' + params.toString());
+    localStorage.setItem('landasTrafficState', params.toString());
+  } catch(e) {}
+}
+
+function loadState() {
+  let params;
+  const hash = location.hash.slice(1);
+  if (hash) {
+    params = new URLSearchParams(hash);
+  } else {
+    try {
+      const saved = localStorage.getItem('landasTrafficState');
+      if (saved) params = new URLSearchParams(saved);
+    } catch(e) {}
+  }
+  if (!params) return;
+
+  const get = (k, def) => params.has(k) ? +params.get(k) : def;
+  document.getElementById('sliderEmployees').value = get('e', 6500);
+  document.getElementById('sliderVisitors').value = get('v', 1500);
+  document.getElementById('sliderCar').value = get('c', 35);
+  document.getElementById('sliderMotorbike').value = get('m', 40);
+  document.getElementById('sliderTricycle').value = get('tr', 20);
+  document.getElementById('sliderOccupancy').value = get('oc', 13);
+  document.getElementById('sliderPeakConc').value = get('pk', 60);
+  document.getElementById('sliderParking').value = get('ps', 800);
+  document.getElementById('sliderCapture').value = get('cr', 60);
+  document.getElementById('sliderWalkBike').value = get('wb', 75);
+  document.getElementById('sliderCost').value = get('cph', 120);
+  document.getElementById('timeSlider').value = get('t', 450);
+  STATE.timeMin = get('t', 450);
+
+  STATE.zoneADense = get('za', 1) === 1;
+  document.getElementById('toggleZoneA').textContent = STATE.zoneADense ? 'Dense (5,973)' : 'Base (2,791)';
+  document.getElementById('toggleZoneA').classList.toggle('active', STATE.zoneADense);
+
+  STATE.mpwOn = get('mpw', 1) === 1;
+  document.getElementById('toggleMPW').textContent = STATE.mpwOn ? 'On' : 'Off';
+  document.getElementById('toggleMPW').classList.toggle('active', STATE.mpwOn);
+}
+
+// ═══════════════════════════════════════════════════════════
+// NETWORK STATS SIDEBAR
+// ═══════════════════════════════════════════════════════════
+function updateNetworkStats() {
+  const orcStats = analyzeNetwork(orcProjected.projected);
+  const parangStats = analyzeNetwork(parangProjected.projected);
+
+  document.getElementById('statOrcRoadLen').textContent = (orcStats.totalLen / 1000).toFixed(1) + ' km';
+  document.getElementById('statParangRoadLen').textContent = (parangStats.totalLen / 1000).toFixed(1) + ' km';
+  document.getElementById('statOrcPedShare').textContent = (orcStats.pedShare * 100).toFixed(1) + '% (' + (orcStats.pedLen).toFixed(0) + 'm)';
+  document.getElementById('statParangPedShare').textContent = (parangStats.pedShare * 100).toFixed(1) + '% (' + (parangStats.pedLen).toFixed(0) + 'm)';
+}
+
+// ═══════════════════════════════════════════════════════════
+// INITIALIZATION
+// ═══════════════════════════════════════════════════════════
+function initCanvases() {
+  const orcCanvas = document.getElementById('orcCanvas');
+  const parangCanvas = document.getElementById('parangCanvas');
+
+  function resize() {
+    const orcRect = orcCanvas.parentElement.getBoundingClientRect();
+    const parangRect = parangCanvas.parentElement.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+
+    orcW = orcRect.width * dpr;
+    orcH = orcRect.height * dpr;
+    orcCanvas.width = orcW;
+    orcCanvas.height = orcH;
+    orcCanvas.style.width = orcRect.width + 'px';
+    orcCanvas.style.height = orcRect.height + 'px';
+
+    parangW = parangRect.width * dpr;
+    parangH = parangRect.height * dpr;
+    parangCanvas.width = parangW;
+    parangCanvas.height = parangH;
+    parangCanvas.style.width = parangRect.width + 'px';
+    parangCanvas.style.height = parangRect.height + 'px';
+
+    orcCtx = orcCanvas.getContext('2d');
+    parangCtx = parangCanvas.getContext('2d');
+    orcCtx.scale(dpr, dpr);
+    parangCtx.scale(dpr, dpr);
+
+    // Re-scale to CSS dimensions for drawing
+    orcW = orcRect.width;
+    orcH = orcRect.height;
+    parangW = parangRect.width;
+    parangH = parangRect.height;
+
+    // Reproject
+    if (window.orcRoads) orcProjected = projectRoads(window.orcRoads, { width: orcW, height: orcH });
+    if (window.parangRoads) parangProjected = projectRoads(window.parangRoads, { width: parangW, height: parangH });
+
+    runTrafficModel();
+    refreshParticles();
+    updateNetworkStats();
+  }
+
+  resize();
+  window.addEventListener('resize', resize);
+  parangCanvas.addEventListener('mousedown', (e) => {
+    if (!drawModeOn) return;
+    const rect = parangCanvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    currentDrawLine = [parangProjected.unproj(x, y)];
+  });
+
+  parangCanvas.addEventListener('mousemove', (e) => {
+    if (!drawModeOn || currentDrawLine.length === 0) return;
+    const rect = parangCanvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    // visual feedback could be drawn in animate loop or here directly
+    // let's just append points if it's far enough from the last point to avoid too many points
+    const lastLonLat = currentDrawLine[currentDrawLine.length - 1];
+    const lastCanvasPt = parangProjected.proj(lastLonLat[0], lastLonLat[1]);
+    const dx = x - lastCanvasPt[0];
+    const dy = y - lastCanvasPt[1];
+    if (Math.sqrt(dx*dx + dy*dy) > 10) {
+      currentDrawLine.push(parangProjected.unproj(x, y));
+    }
+  });
+
+  parangCanvas.addEventListener('mouseup', (e) => {
+    if (!drawModeOn || currentDrawLine.length < 2) {
+      currentDrawLine = [];
+      return;
+    }
+    // Finalize the road
+    window.parangRoads.roads.push({
+      type: 'residential',
+      pts: currentDrawLine
+    });
+    currentDrawLine = [];
+    // Reproject and run
+    parangProjected = projectRoads(window.parangRoads, { width: parangW, height: parangH });
+    runTrafficModel();
+    refreshParticles();
+    updateNetworkStats();
+  });
+}
+
+function toggleDrawMode() {
+  drawModeOn = !drawModeOn;
+  const btn = document.getElementById('btnDrawRoad');
+  const tip = document.getElementById('drawTip');
+  if (drawModeOn) {
+    btn.classList.add('active');
+    btn.style.background = 'var(--accent)';
+    tip.style.display = 'flex';
+  } else {
+    btn.classList.remove('active');
+    btn.style.background = '';
+    tip.style.display = 'none';
+  }
+}
+
+let tooltipElem = null;
+
+function initTooltip() {
+  tooltipElem = document.createElement('div');
+  tooltipElem.className = 'custom-tooltip';
+  document.body.appendChild(tooltipElem);
+
+  document.querySelectorAll('[data-tooltip]').forEach(el => {
+    el.addEventListener('mouseenter', (e) => {
+      tooltipElem.innerHTML = el.getAttribute('data-tooltip');
+      tooltipElem.classList.add('visible');
+      
+      const rect = el.getBoundingClientRect();
+      let top = rect.top - tooltipElem.offsetHeight - 8;
+      let left = rect.left + (rect.width / 2) - (tooltipElem.offsetWidth / 2);
+
+      // Boundary checks
+      if (top < 10) top = rect.bottom + 8; // flip to bottom if too close to top
+      if (left < 10) left = 10;
+      if (left + tooltipElem.offsetWidth > window.innerWidth - 10) {
+        left = window.innerWidth - tooltipElem.offsetWidth - 10;
+      }
+
+      tooltipElem.style.top = top + 'px';
+      tooltipElem.style.left = left + 'px';
+    });
+    
+    el.addEventListener('mouseleave', () => {
+      tooltipElem.classList.remove('visible');
+    });
+  });
+}
+
+function init() {
+  loadState();
+  initTooltip();
+  onModeSplitChange();
+  updateTimeDisplay();
+  initCanvases();
+  requestAnimationFrame(animate);
+}
+
+// Wait for data scripts to load
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+</script>
+</body>
+</html>
