@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Mindanao One">
+  <rect width="64" height="64" rx="12" fill="#2b2722"/>
+  <circle cx="32" cy="32" r="21" fill="none" stroke="#c9a87c" stroke-width="3"/>
+  <rect x="29" y="11" width="6" height="42" rx="3" fill="#f4ecdd"/>
+  <ellipse cx="32" cy="24" rx="9.5" ry="3" fill="#f4ecdd"/>
+  <ellipse cx="32" cy="34" rx="7.5" ry="2.6" fill="#f4ecdd"/>
+  <ellipse cx="32" cy="43" rx="5.5" ry="2.2" fill="#f4ecdd"/>
+</svg>
