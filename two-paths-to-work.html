@@ -515,7 +515,7 @@ body.print-mode .sidebar { transform: translateX(100%) !important; }
     </div>
   </div>
 </div>
-<img id="overlayImg" src="data/landas-overlay.png" style="display:none;">
+<img id="overlayImg" src="data/landas-overlay.webp" style="display:none;">
 
 <script>
 // ═══════════════════════════════════════════════════════════
@@ -980,10 +980,10 @@ function drawRoads(ctx, projected, w, h) {
   ctx.fillRect(0, 0, w, h);
 
   // Overlay for Parang
-  if (projected === parangProjected.projected && window.sitesBriefingData && window.sitesBriefingData.overlayBox) {
+  if (projected === parangProjected.projected && window.sitesData && window.sitesData.overlayBox) {
     const img = document.getElementById('overlayImg');
     if (img && img.complete && img.naturalWidth !== 0) {
-      const b = window.sitesBriefingData.overlayBox;
+      const b = window.sitesData.overlayBox;
       const tl = parangProjected.proj(b.W, b.N);
       const br = parangProjected.proj(b.E, b.S);
       ctx.globalAlpha = 0.5;
