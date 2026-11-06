@@ -23,27 +23,65 @@ the Bangsamoro region.
 | `data/sites.js` | `two-paths-to-work.html` | `window.sitesData` — site polygons plus `overlayBox`, the lat/lon corners the Landas masterplan image is georeferenced to. |
 | `data/landas-overlay.webp` | `two-paths-to-work.html` | Landas masterplan render, drawn on the Parang map at 50% opacity beneath the road network. |
 
-## Editing `index.html` and `barmm-fiscal-flows.html` — read this first
+## How `index.html` is built — read this first
 
-These two are **single-file exports from a design tool**, not hand-written HTML. Each one
-is a self-contained bundle:
+`index.html` is **generated**, not hand-written. Its source is the Claude Design project
+*PS Group Mindanao Landing Page* (`project/Oscar Sarmiento.dc.html` inside the migrated
+canvas). Hand-edits here are lost the next time the page is exported — change the design
+project, re-export, and rebuild.
 
-- a normal `<head>` and an unpacking script at the top — safe to edit by hand;
-- **one very long line holding a JSON asset map**, `{"<uuid>": {"mime", "compressed", "data": "<base64>"}}`;
-- **one very long line holding the real page**, as a JSON-encoded HTML string, where assets
-  are referenced by bare UUID (`src="1f1e8aee-…"`).
+To rebuild after a re-export:
 
-On load the script decodes each asset into a `blob:` URL, rewrites those UUID references,
-and replaces `document.documentElement` with the unpacked page.
+```
+python3 tools/build-index.py "<export>/Oscar Sarmiento.dc.html" tools/fonts.css index.html
+```
+
+The script asserts on every substitution it makes, so it fails loudly rather than
+silently producing a half-patched page. It does six things the raw export does not:
+
+1. injects the `<title>`, description, canonical, icons, Open Graph / Twitter cards and
+   the GA4 tag into the real `<head>` — none of these exist in the design export;
+2. replaces the Google Fonts `<link>` with the self-hosted `@font-face` block in
+   `tools/fonts.css`, so the page makes no third-party font request;
+3. points the image references at the optimized `.webp` files in `assets/`;
+4. marks the below-the-fold images `loading="lazy"`;
+5. pins the hero video to `assets/banwag.mp4` (see below);
+6. resolves the hero `<source>` in the markup. This one matters: the browser's preload
+   scanner reads `src` before `support.js` can substitute `{{ heroSrc }}`, so leaving the
+   placeholder there costs a wasted 404 request on every single page load.
+
+### Supporting files
+
+| Path | What it is |
+|---|---|
+| `support.js` | the design runtime — renders the `<x-dc>` element, `{{ }}` bindings and `style-hover` attributes. Patched to load React from `vendor/` instead of unpkg.com. |
+| `vendor/react-18.3.1.min.js`, `vendor/react-dom-18.3.1.min.js` | vendored so the site has no runtime CDN dependency. Re-apply this patch to `support.js` after a re-export. |
+| `assets/*.webp`, `assets/logo.png` | images resized to the dimensions they are actually displayed at. The originals live in the design project; never re-compress these, re-export instead. |
+| `assets/fonts/*.woff2` | Latin and Latin-Ext subsets only, 14 files for 22 faces (several weights share one variable file). |
+| `assets/banwag.mp4` | the hero video. |
+| `tools/extract-fonts.py` | how `tools/fonts.css` and `assets/fonts/` were produced from the old bundled build; kept for reference. |
+
+**Only one hero video ships.** The design project has a `heroVideo` prop offering
+"Banwag I" and "Banwag II", but shipping both would put 5.3 MB in the repository that no
+visitor ever downloads. The build pins the source to `assets/banwag.mp4` ("Banwag I"). To
+switch, copy `assets/banwag2.mp4` out of the design project and change that one line.
+
+### `barmm-fiscal-flows.html` is still a bundle
+
+It remains a **single-file export from a design tool**: a normal `<head>` and unpacking
+script, then one very long line holding a JSON asset map, then one very long line holding
+the real page as a JSON-encoded HTML string with assets referenced by bare UUID. On load
+the script decodes each asset into a `blob:` URL and replaces `document.documentElement`.
 
 Two consequences:
 
 1. **Never run `sed`, `awk` or line-based regex against those two long lines.** Parse the
-   JSON, mutate it, re-serialize it. Locate the lines by content (longest line; the line
-   beginning `"<!DOCTYPE html>`), not by a hardcoded line number — a re-export moves them.
+   JSON, mutate it, re-serialize it — and when you re-serialize, escape `</` as `<\/`, or a
+   literal `</script>` in the data will terminate the script element and break the page.
+   Locate the lines by content, not by a hardcoded line number.
 2. Anything that must survive the unpack — the `<title>`, favicon links — has to exist in
-   **both** the outer head and the inner page's head. Open Graph tags only need to be in
-   the outer head, since scrapers read the served HTML and never run the script.
+   **both** the outer head and the inner page's head. Open Graph tags only need the outer
+   head, since scrapers read the served HTML and never run the script.
 
 `two-paths-to-work.html` is ordinary hand-written HTML and can be edited normally.
 
@@ -55,10 +93,10 @@ as-is instead of running them through Jekyll.
 
 ## Known remaining work
 
-See `MINDANAO1_OPTIMIZATION_PLAN.md` notes, if you have them, or in short:
-
-- `index.html` still embeds ~4.4 MB of media; both hero videos download although only one
-  is shown. Moving media to real files would cut first-view transfer to roughly 2.0–2.5 MB.
-- About 120 KB of Cyrillic, Greek and Vietnamese font subsets are embedded and unused.
-- The page is built in the browser, so the served HTML carries no body content for
-  crawlers or link-preview scrapers.
+- The landing page is still rendered in the browser by `support.js`, so the served HTML
+  carries no body content for crawlers. Link previews work (Open Graph tags are static),
+  but a pre-rendered body would be better for search.
+- `barmm-fiscal-flows.html` is still a 463 KB single-file bundle.
+- `support.js` keeps a lazy reference to `@babel/standalone` on unpkg.com. It is never
+  requested by this page, which uses plain JS rather than JSX, but a future export that
+  introduces JSX would reintroduce a CDN dependency.
