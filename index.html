@@ -57,11 +57,7 @@
 @font-face{font-family:'Spectral';font-style:normal;font-weight:600;font-display:swap;src:url('assets/fonts/spectral-12.woff2') format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;}
 @font-face{font-family:'Spectral';font-style:normal;font-weight:600;font-display:swap;src:url('assets/fonts/spectral-13.woff2') format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
 </style>
-<script src="support.js"></script>
-</head>
-<body>
-<x-dc>
-<helmet>
+
 <style>
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -70,9 +66,30 @@ img{display:block;max-width:100%}
 ::selection{background:#2f6b3d;color:#f4ecdd}
 @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(9px)}}
 </style>
-</helmet>
-
-<div ref="{{ rootRef }}" style="--accent: {{ accentColor }}; font-family:'Hanken Grotesk',system-ui,sans-serif; color:#2b2722; background:#f4ecdd; overflow-x:hidden; -webkit-font-smoothing:antialiased;">
+<style>
+.dh1:hover{opacity:1;}
+.dh2:hover{opacity:1;}
+.dh3:hover{opacity:1;}
+.dh4:hover{background:#ffffff;}
+.dh5:hover{filter:brightness(1.08);}
+.dh6:hover{background:rgba(244,236,221,0.22);}
+.dh7:hover{border-color:var(--accent,#2f6b3d);}
+.dh8:hover{border-color:var(--accent,#2f6b3d); transform:translateY(-3px);}
+.dh9:hover{border-color:var(--accent,#2f6b3d); transform:translateY(-3px);}
+.dh10:hover{color:#fbf6ec;}
+.dh11:hover{border-color:var(--accent,#2f6b3d);}
+.dh12:hover{filter:brightness(1.08);}
+.dh13:hover{background:rgba(244,236,221,0.2);}
+.dh14:hover{background:rgba(244,236,221,0.2);}
+.dh15:hover{background:rgba(244,236,221,0.2);}
+.dh16:hover{filter:brightness(1.08);}
+.dh17:hover{background:#e4d6bd;}
+.dh18:hover{filter:brightness(1.08);}
+.dh19:hover{border-color:var(--accent,#2f6b3d);}
+</style>
+</head>
+<body>
+<div style="--accent: #2f6b3d; font-family:'Hanken Grotesk',system-ui,sans-serif; color:#2b2722; background:#f4ecdd; overflow-x:hidden; -webkit-font-smoothing:antialiased;">
 
   <!-- ===================== HERO ===================== -->
   <section style="position:relative; min-height:94vh; display:flex; flex-direction:column; overflow:hidden;">
@@ -88,10 +105,10 @@ img{display:block;max-width:100%}
         <span style="color:#f4ecdd; font-weight:600; font-size:14px; letter-spacing:0.04em; line-height:1.15;">PS Group<br><span style="font-weight:400; opacity:0.72; font-size:12px;">of Companies</span></span>
       </a>
       <nav style="display:flex; align-items:center; gap:clamp(16px,2.4vw,34px);">
-        <a href="#about" style="color:#f4ecdd; text-decoration:none; font-size:13px; letter-spacing:0.12em; text-transform:uppercase; opacity:0.85;" style-hover="opacity:1;">About</a>
-        <a href="#work" style="color:#f4ecdd; text-decoration:none; font-size:13px; letter-spacing:0.12em; text-transform:uppercase; opacity:0.85;" style-hover="opacity:1;">Work</a>
-        <a href="#watch" style="color:#f4ecdd; text-decoration:none; font-size:13px; letter-spacing:0.12em; text-transform:uppercase; opacity:0.85;" style-hover="opacity:1;">Watch</a>
-        <a href="#connect" style="color:#0e0c09; background:#f4ecdd; text-decoration:none; font-size:13px; letter-spacing:0.1em; text-transform:uppercase; font-weight:600; padding:11px 20px; border-radius:100px;" style-hover="background:#ffffff;">Connect</a>
+        <a class="dh1" href="#about" style="color:#f4ecdd; text-decoration:none; font-size:13px; letter-spacing:0.12em; text-transform:uppercase; opacity:0.85;">About</a>
+        <a class="dh2" href="#work" style="color:#f4ecdd; text-decoration:none; font-size:13px; letter-spacing:0.12em; text-transform:uppercase; opacity:0.85;">Work</a>
+        <a class="dh3" href="#watch" style="color:#f4ecdd; text-decoration:none; font-size:13px; letter-spacing:0.12em; text-transform:uppercase; opacity:0.85;">Watch</a>
+        <a class="dh4" href="#connect" style="color:#0e0c09; background:#f4ecdd; text-decoration:none; font-size:13px; letter-spacing:0.1em; text-transform:uppercase; font-weight:600; padding:11px 20px; border-radius:100px;">Connect</a>
       </nav>
     </header>
 
@@ -105,10 +122,10 @@ img{display:block;max-width:100%}
         <span style="color:#f4ecdd; font-size:clamp(0.95rem,1.6vw,1.1rem); opacity:0.9; max-width:30ch;">Chief Operations Officer for Mindanao &mdash; strategist &amp; dreamer for what the region can become.</span>
       </div>
       <div style="display:flex; gap:14px; margin-top:42px; flex-wrap:wrap;">
-        <a href="#work" style="display:inline-flex; align-items:center; gap:10px; background:var(--accent,#2f6b3d); color:#fbf6ec; text-decoration:none; font-weight:600; font-size:15px; padding:15px 28px; border-radius:100px;" style-hover="filter:brightness(1.08);">Explore the work
+        <a class="dh5" href="#work" style="display:inline-flex; align-items:center; gap:10px; background:var(--accent,#2f6b3d); color:#fbf6ec; text-decoration:none; font-weight:600; font-size:15px; padding:15px 28px; border-radius:100px;">Explore the work
           <span style="font-size:17px;">&darr;</span>
         </a>
-        <a href="https://www.pssarmiento.com" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:10px; background:rgba(244,236,221,0.12); border:1px solid rgba(244,236,221,0.4); color:#fbf6ec; text-decoration:none; font-weight:500; font-size:15px; padding:15px 26px; border-radius:100px; backdrop-filter:blur(4px);" style-hover="background:rgba(244,236,221,0.22);">PS Group of Companies <span style="font-size:13px;">&#8599;</span></a>
+        <a class="dh6" href="https://www.pssarmiento.com" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:10px; background:rgba(244,236,221,0.12); border:1px solid rgba(244,236,221,0.4); color:#fbf6ec; text-decoration:none; font-weight:500; font-size:15px; padding:15px 26px; border-radius:100px; backdrop-filter:blur(4px);">PS Group of Companies <span style="font-size:13px;">&#8599;</span></a>
       </div>
     </div>
 
@@ -161,7 +178,7 @@ img{display:block;max-width:100%}
       </div>
 
       <!-- featured: PS Group -->
-      <a data-reveal href="https://www.pssarmiento.com" target="_blank" rel="noopener" style="display:flex; gap:0; flex-wrap:wrap; text-decoration:none; color:inherit; border-radius:8px; overflow:hidden; border:1px solid #e0d3bb; background:#fbf6ec; margin-bottom:24px;" style-hover="border-color:var(--accent,#2f6b3d);">
+      <a class="dh7" data-reveal href="https://www.pssarmiento.com" target="_blank" rel="noopener" style="display:flex; gap:0; flex-wrap:wrap; text-decoration:none; color:inherit; border-radius:8px; overflow:hidden; border:1px solid #e0d3bb; background:#fbf6ec; margin-bottom:24px;">
         <div style="flex:1 1 280px; min-height:220px; position:relative; background:#2b2722;">
           <img loading="lazy" decoding="async" src="assets/dome-ceiling-1.webp" alt="Bamboo dome ceiling" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.92;">
         </div>
@@ -180,7 +197,7 @@ img{display:block;max-width:100%}
       <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:24px;">
 
         <!-- Landas -->
-        <a data-reveal data-reveal-delay="60" href="https://sites.google.com/pssarmiento.com/landas-interactive-map/home" target="_blank" rel="noopener" style="display:flex; flex-direction:column; text-decoration:none; color:inherit; background:#fbf6ec; border:1px solid #e0d3bb; border-radius:8px; padding:clamp(26px,3vw,34px); min-height:260px;" style-hover="border-color:var(--accent,#2f6b3d); transform:translateY(-3px);">
+        <a class="dh8" data-reveal data-reveal-delay="60" href="https://sites.google.com/pssarmiento.com/landas-interactive-map/home" target="_blank" rel="noopener" style="display:flex; flex-direction:column; text-decoration:none; color:inherit; background:#fbf6ec; border:1px solid #e0d3bb; border-radius:8px; padding:clamp(26px,3vw,34px); min-height:260px;">
           <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:auto;">
             <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#9b8a6c;">02</span>
             <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:#fbf6ec; background:var(--accent,#2f6b3d); padding:5px 10px; border-radius:100px;">Live</span>
@@ -194,7 +211,7 @@ img{display:block;max-width:100%}
         </a>
 
         <!-- Parental time -->
-        <a data-reveal data-reveal-delay="120" href="https://sites.google.com/pssarmiento.com/afewthousandhours/home" target="_blank" rel="noopener" style="display:flex; flex-direction:column; text-decoration:none; color:inherit; background:#fbf6ec; border:1px solid #e0d3bb; border-radius:8px; padding:clamp(26px,3vw,34px); min-height:260px;" style-hover="border-color:var(--accent,#2f6b3d); transform:translateY(-3px);">
+        <a class="dh9" data-reveal data-reveal-delay="120" href="https://sites.google.com/pssarmiento.com/afewthousandhours/home" target="_blank" rel="noopener" style="display:flex; flex-direction:column; text-decoration:none; color:inherit; background:#fbf6ec; border:1px solid #e0d3bb; border-radius:8px; padding:clamp(26px,3vw,34px); min-height:260px;">
           <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:auto;">
             <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#9b8a6c;">03</span>
             <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:#fbf6ec; background:var(--accent,#2f6b3d); padding:5px 10px; border-radius:100px;">Live</span>
@@ -218,7 +235,7 @@ img{display:block;max-width:100%}
             <div style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:#e8c79a; margin-bottom:12px;">Private workspace</div>
             <h3 style="font-family:'Spectral',serif; font-weight:500; font-size:1.5rem; line-height:1.12; margin:0 0 12px; color:#fbf6ec;">Team Mindanao OS</h3>
             <p style="font-size:0.98rem; line-height:1.6; color:#c9bfae; margin:0 0 18px;">The operating system that runs PS Group Team Mindanao. Internal only &mdash; not open to the public.</p>
-            <a href="#" style="display:inline-flex; align-items:center; gap:8px; font-weight:600; color:#e8c79a; font-size:14px; text-decoration:none;" style-hover="color:#fbf6ec;">Team login <span>&rarr;</span></a>
+            <a class="dh10" href="#" style="display:inline-flex; align-items:center; gap:8px; font-weight:600; color:#e8c79a; font-size:14px; text-decoration:none;">Team login <span>&rarr;</span></a>
           </div>
         </div>
 
@@ -233,7 +250,7 @@ img{display:block;max-width:100%}
         <div style="font-family:'JetBrains Mono',monospace; color:var(--accent,#2f6b3d); font-size:13px; letter-spacing:0.24em; text-transform:uppercase; margin-bottom:20px;">Watch</div>
         <h2 style="font-family:'Spectral',serif; font-weight:400; font-size:clamp(1.9rem,4.4vw,3.2rem); line-height:1.06; letter-spacing:-0.01em; margin:0; max-width:16ch;">Dreaming Mindanao, on film.</h2>
       </div>
-      <a href="https://www.youtube.com/@mindanao1-Sarmiento" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:9px; color:var(--accent,#2f6b3d); font-weight:600; font-size:15px; text-decoration:none; border:1px solid #e0d3bb; padding:13px 22px; border-radius:100px;" style-hover="border-color:var(--accent,#2f6b3d);">View the channel <span>&#8599;</span></a>
+      <a class="dh11" href="https://www.youtube.com/@mindanao1-Sarmiento" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:9px; color:var(--accent,#2f6b3d); font-weight:600; font-size:15px; text-decoration:none; border:1px solid #e0d3bb; padding:13px 22px; border-radius:100px;">View the channel <span>&#8599;</span></a>
     </div>
     <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:24px;">
       <div data-reveal style="border-radius:8px; overflow:hidden; border:1px solid #e0d3bb; background:#000; box-shadow:0 10px 30px rgba(43,39,34,0.08);">
@@ -258,13 +275,13 @@ img{display:block;max-width:100%}
       <h2 data-reveal data-reveal-delay="80" style="font-family:'Spectral',serif; font-weight:400; color:#fbf6ec; font-size:clamp(2.1rem,5.5vw,4rem); line-height:1.05; letter-spacing:-0.01em; margin:0 auto 18px; max-width:18ch;">Let's build something for Mindanao.</h2>
       <p data-reveal data-reveal-delay="140" style="color:#c9bfae; font-size:clamp(1rem,1.6vw,1.18rem); line-height:1.6; max-width:46ch; margin:0 auto 38px;">Whether you're a partner, an investor, or simply curious about the work &mdash; I'd love to hear from you.</p>
       <div data-reveal data-reveal-delay="170" style="margin:0 auto 30px;">
-        <button onClick="{{ openContact }}" style="display:inline-flex; align-items:center; gap:10px; background:var(--accent,#2f6b3d); color:#fbf6ec; border:none; font-family:inherit; font-weight:600; font-size:16px; padding:16px 32px; border-radius:100px; cursor:pointer;" style-hover="filter:brightness(1.08);">Get in touch <span style="font-size:17px;">&rarr;</span></button>
+        <button class="dh12" data-act="open" style="display:inline-flex; align-items:center; gap:10px; background:var(--accent,#2f6b3d); color:#fbf6ec; border:none; font-family:inherit; font-weight:600; font-size:16px; padding:16px 32px; border-radius:100px; cursor:pointer;">Get in touch <span style="font-size:17px;">&rarr;</span></button>
       </div>
       <div data-reveal data-reveal-delay="200" style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap;">
-        <a href="https://www.facebook.com/jun.sarmiento" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:9px; background:rgba(244,236,221,0.1); border:1px solid rgba(244,236,221,0.28); color:#fbf6ec; text-decoration:none; font-weight:500; font-size:15px; padding:14px 24px; border-radius:100px;" style-hover="background:rgba(244,236,221,0.2);">Facebook <span style="font-size:13px;">&#8599;</span></a>
-        <a href="https://www.instagram.com/meinthenow1" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:9px; background:rgba(244,236,221,0.1); border:1px solid rgba(244,236,221,0.28); color:#fbf6ec; text-decoration:none; font-weight:500; font-size:15px; padding:14px 24px; border-radius:100px;" style-hover="background:rgba(244,236,221,0.2);">Instagram <span style="font-size:13px;">&#8599;</span></a>
-        <a href="https://www.youtube.com/@mindanao1-Sarmiento" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:9px; background:rgba(244,236,221,0.1); border:1px solid rgba(244,236,221,0.28); color:#fbf6ec; text-decoration:none; font-weight:500; font-size:15px; padding:14px 24px; border-radius:100px;" style-hover="background:rgba(244,236,221,0.2);">YouTube <span style="font-size:13px;">&#8599;</span></a>
-        <a href="https://www.pssarmiento.com" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:9px; background:var(--accent,#2f6b3d); border:1px solid var(--accent,#2f6b3d); color:#fbf6ec; text-decoration:none; font-weight:600; font-size:15px; padding:14px 24px; border-radius:100px;" style-hover="filter:brightness(1.08);">PS Group <span style="font-size:13px;">&#8599;</span></a>
+        <a class="dh13" href="https://www.facebook.com/jun.sarmiento" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:9px; background:rgba(244,236,221,0.1); border:1px solid rgba(244,236,221,0.28); color:#fbf6ec; text-decoration:none; font-weight:500; font-size:15px; padding:14px 24px; border-radius:100px;">Facebook <span style="font-size:13px;">&#8599;</span></a>
+        <a class="dh14" href="https://www.instagram.com/meinthenow1" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:9px; background:rgba(244,236,221,0.1); border:1px solid rgba(244,236,221,0.28); color:#fbf6ec; text-decoration:none; font-weight:500; font-size:15px; padding:14px 24px; border-radius:100px;">Instagram <span style="font-size:13px;">&#8599;</span></a>
+        <a class="dh15" href="https://www.youtube.com/@mindanao1-Sarmiento" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:9px; background:rgba(244,236,221,0.1); border:1px solid rgba(244,236,221,0.28); color:#fbf6ec; text-decoration:none; font-weight:500; font-size:15px; padding:14px 24px; border-radius:100px;">YouTube <span style="font-size:13px;">&#8599;</span></a>
+        <a class="dh16" href="https://www.pssarmiento.com" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:9px; background:var(--accent,#2f6b3d); border:1px solid var(--accent,#2f6b3d); color:#fbf6ec; text-decoration:none; font-weight:600; font-size:15px; padding:14px 24px; border-radius:100px;">PS Group <span style="font-size:13px;">&#8599;</span></a>
       </div>
     </div>
 
@@ -281,94 +298,88 @@ img{display:block;max-width:100%}
   </section>
 
   <!-- ===================== CONTACT MODAL ===================== -->
-  <div style="position:fixed; inset:0; z-index:60; display: {{ contactDisplay }}; align-items:center; justify-content:center; padding:20px;">
-    <div onClick="{{ closeContact }}" style="position:absolute; inset:0; background:rgba(20,17,13,0.62); backdrop-filter:blur(3px);"></div>
+  <div id="dc-contact" style="position:fixed; inset:0; z-index:60; display: none; align-items:center; justify-content:center; padding:20px;">
+    <div data-act="close" style="position:absolute; inset:0; background:rgba(20,17,13,0.62); backdrop-filter:blur(3px);"></div>
     <div style="position:relative; width:100%; max-width:460px; background:#fbf6ec; border:1px solid #e0d3bb; border-radius:14px; padding:clamp(26px,4vw,38px); box-shadow:0 30px 90px rgba(20,17,13,0.45);">
-      <button onClick="{{ closeContact }}" aria-label="Close" style="position:absolute; top:16px; right:16px; width:34px; height:34px; border:none; background:#efe4d0; border-radius:50%; cursor:pointer; font-size:17px; line-height:1; color:#6f675b;" style-hover="background:#e4d6bd;">&times;</button>
+      <button class="dh17" data-act="close" aria-label="Close" style="position:absolute; top:16px; right:16px; width:34px; height:34px; border:none; background:#efe4d0; border-radius:50%; cursor:pointer; font-size:17px; line-height:1; color:#6f675b;">&times;</button>
       <div style="font-family:'JetBrains Mono',monospace; color:var(--accent,#2f6b3d); font-size:12px; letter-spacing:0.2em; text-transform:uppercase; margin-bottom:14px;">Get in touch</div>
       <h3 style="font-family:'Spectral',serif; font-weight:500; font-size:1.7rem; line-height:1.1; margin:0 0 8px;">Send me a note</h3>
       <p style="font-size:0.95rem; line-height:1.55; color:#6f675b; margin:0 0 22px;">Fill this in and it opens straight in your own email app &mdash; my address is never posted in plain text, so spam bots can't scrape it.</p>
-      <form onSubmit="{{ submitContact }}">
-        <input ref="{{ nameRef }}" type="text" placeholder="Your name" style="width:100%; font-family:inherit; font-size:15px; color:#2b2722; background:#f4ecdd; border:1px solid #e0d3bb; border-radius:8px; padding:13px 15px; margin-bottom:12px; outline:none;" style-focus="border-color:var(--accent,#2f6b3d);">
-        <textarea ref="{{ msgRef }}" rows="4" placeholder="Your message" style="width:100%; font-family:inherit; font-size:15px; color:#2b2722; background:#f4ecdd; border:1px solid #e0d3bb; border-radius:8px; padding:13px 15px; margin-bottom:18px; outline:none; resize:vertical;" style-focus="border-color:var(--accent,#2f6b3d);"></textarea>
-        <button type="submit" style="width:100%; display:inline-flex; align-items:center; justify-content:center; gap:9px; background:var(--accent,#2f6b3d); color:#fbf6ec; border:none; font-family:inherit; font-weight:600; font-size:15px; padding:15px; border-radius:100px; cursor:pointer;" style-hover="filter:brightness(1.08);">Open in my email app <span>&rarr;</span></button>
+      <form id="dc-form">
+        <input id="dc-name" type="text" placeholder="Your name" style="width:100%; font-family:inherit; font-size:15px; color:#2b2722; background:#f4ecdd; border:1px solid #e0d3bb; border-radius:8px; padding:13px 15px; margin-bottom:12px; outline:none;" style-focus="border-color:var(--accent,#2f6b3d);">
+        <textarea id="dc-msg" rows="4" placeholder="Your message" style="width:100%; font-family:inherit; font-size:15px; color:#2b2722; background:#f4ecdd; border:1px solid #e0d3bb; border-radius:8px; padding:13px 15px; margin-bottom:18px; outline:none; resize:vertical;" style-focus="border-color:var(--accent,#2f6b3d);"></textarea>
+        <button class="dh18" type="submit" style="width:100%; display:inline-flex; align-items:center; justify-content:center; gap:9px; background:var(--accent,#2f6b3d); color:#fbf6ec; border:none; font-family:inherit; font-weight:600; font-size:15px; padding:15px; border-radius:100px; cursor:pointer;">Open in my email app <span>&rarr;</span></button>
       </form>
       <div style="display:flex; align-items:center; justify-content:center; gap:10px; margin-top:18px; padding-top:18px; border-top:1px solid #e0d3bb;">
-        <span ref="{{ emailRef }}" style="font-family:'JetBrains Mono',monospace; font-size:13px; color:#6f675b;">&mdash;</span>
-        <button onClick="{{ copyEmail }}" style="background:none; border:1px solid #e0d3bb; border-radius:100px; padding:6px 12px; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.06em; color:var(--accent,#2f6b3d); cursor:pointer;" style-hover="border-color:var(--accent,#2f6b3d);">{{ copyLabel }}</button>
+        <span id="dc-email" style="font-family:'JetBrains Mono',monospace; font-size:13px; color:#6f675b;">&mdash;</span>
+        <button class="dh19" id="dc-copy" data-act="copy" style="background:none; border:1px solid #e0d3bb; border-radius:100px; padding:6px 12px; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.06em; color:var(--accent,#2f6b3d); cursor:pointer;">Copy</button>
       </div>
     </div>
   </div>
 
 </div>
-</x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;accent&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Bamboo green&quot;,&quot;Ember orange&quot;],&quot;default&quot;:&quot;Bamboo green&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;heroVideo&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Banwag I&quot;,&quot;Banwag II&quot;],&quot;default&quot;:&quot;Banwag I&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;reveals&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
-class Component extends DCLogic {
-  state = { contactOpen: false, copyLabel: 'Copy' };
 
-  email() { return ['oscar.jr', 'pssarmiento.com'].join('@'); }
+<script>
+// Replaces the design runtime: the same behaviour the component had, without React.
+(function () {
+  // Assembled rather than written out, so the address is never in the served HTML.
+  var EMAIL = ['oscar.jr', 'pssarmiento.com'].join('@');
+  var modal = document.getElementById('dc-contact');
+  var emailEl = document.getElementById('dc-email');
+  var copyBtn = document.getElementById('dc-copy');
+  if (emailEl) emailEl.textContent = EMAIL;
 
-  renderVals() {
-    const accentColor = (this.props.accent === 'Ember orange') ? '#c27a2b' : '#2f6b3d';
-    // Only Banwag I ships with the site: assets/banwag2.mp4 lives in the design project
-    // but is not deployed, so both prop values resolve to the one asset that exists.
-    // To switch, copy assets/banwag2.mp4 out of the design project and change this line.
-    const heroSrc = 'assets/banwag.mp4';
-    return {
-      accentColor,
-      heroSrc,
-      rootRef: (el) => { this.rootEl = el; },
-      contactDisplay: this.state.contactOpen ? 'flex' : 'none',
-      copyLabel: this.state.copyLabel,
-      openContact: () => this.setState({ contactOpen: true }),
-      closeContact: () => this.setState({ contactOpen: false, copyLabel: 'Copy' }),
-      submitContact: (e) => {
-        e.preventDefault();
-        const name = (this.nameEl && this.nameEl.value || '').trim();
-        const msg = (this.msgEl && this.msgEl.value || '').trim();
-        const subject = encodeURIComponent('Hello from pssarmiento.com' + (name ? ' — ' + name : ''));
-        const body = encodeURIComponent(msg + (name ? '\n\n— ' + name : ''));
-        window.location.href = 'mailto:' + this.email() + '?subject=' + subject + '&body=' + body;
-      },
-      copyEmail: () => {
-        try { if (navigator.clipboard) navigator.clipboard.writeText(this.email()); } catch (err) {}
-        this.setState({ copyLabel: 'Copied!' });
-      },
-      nameRef: (el) => { this.nameEl = el; },
-      msgRef: (el) => { this.msgEl = el; },
-      emailRef: (el) => { if (el) el.textContent = this.email(); },
-    };
+  function setOpen(on) {
+    if (modal) modal.style.display = on ? 'flex' : 'none';
+    if (!on && copyBtn) copyBtn.textContent = 'Copy';
   }
 
-  componentDidMount() {
-    const enabled = this.props.reveals ?? true;
-    if (!enabled || !this.rootEl) return;
-    const els = this.rootEl.querySelectorAll('[data-reveal]');
-    els.forEach((el) => {
-      el.style.opacity = '0';
-      el.style.transform = 'translateY(26px)';
-      el.style.transition = 'opacity .85s cubic-bezier(.2,.7,.2,1), transform .85s cubic-bezier(.2,.7,.2,1)';
-      el.style.willChange = 'opacity, transform';
+  document.addEventListener('click', function (e) {
+    var t = e.target && e.target.closest ? e.target.closest('[data-act]') : null;
+    if (!t) return;
+    var act = t.getAttribute('data-act');
+    if (act === 'open') { e.preventDefault(); setOpen(true); }
+    else if (act === 'close') { setOpen(false); }
+    else if (act === 'copy') {
+      try { if (navigator.clipboard) navigator.clipboard.writeText(EMAIL); } catch (err) {}
+      t.textContent = 'Copied!';
+    }
+  });
+
+  var form = document.getElementById('dc-form');
+  if (form) form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var nameEl = document.getElementById('dc-name');
+    var msgEl = document.getElementById('dc-msg');
+    var name = ((nameEl && nameEl.value) || '').trim();
+    var msg = ((msgEl && msgEl.value) || '').trim();
+    var subject = encodeURIComponent('Hello from pssarmiento.com' + (name ? ' \u2014 ' + name : ''));
+    var body = encodeURIComponent(msg + (name ? '\n\n\u2014 ' + name : ''));
+    window.location.href = 'mailto:' + EMAIL + '?subject=' + subject + '&body=' + body;
+  });
+
+  // Reveal on scroll, same thresholds the design runtime used. Content is in the
+  // HTML either way, so without JS or IntersectionObserver it simply stays visible.
+  var els = document.querySelectorAll('[data-reveal]');
+  if (!els.length || !('IntersectionObserver' in window)) return;
+  Array.prototype.forEach.call(els, function (el) {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(26px)';
+    el.style.transition = 'opacity .85s cubic-bezier(.2,.7,.2,1), transform .85s cubic-bezier(.2,.7,.2,1)';
+    el.style.willChange = 'opacity, transform';
+  });
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (!entry.isIntersecting) return;
+      var el = entry.target;
+      el.style.transitionDelay = (el.getAttribute('data-reveal-delay') || 0) + 'ms';
+      el.style.opacity = '1';
+      el.style.transform = 'none';
+      io.unobserve(el);
     });
-    this._io = new IntersectionObserver((entries) => {
-      entries.forEach((e) => {
-        if (e.isIntersecting) {
-          const el = e.target;
-          const d = el.getAttribute('data-reveal-delay') || 0;
-          el.style.transitionDelay = d + 'ms';
-          el.style.opacity = '1';
-          el.style.transform = 'none';
-          this._io.unobserve(el);
-        }
-      });
-    }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
-    els.forEach((el) => this._io.observe(el));
-  }
-
-  componentWillUnmount() {
-    if (this._io) this._io.disconnect();
-  }
-}
+  }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+  Array.prototype.forEach.call(els, function (el) { io.observe(el); });
+})();
 </script>
 </body>
 </html>

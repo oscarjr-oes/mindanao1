@@ -30,10 +30,15 @@ the Bangsamoro region.
 canvas). Hand-edits here are lost the next time the page is exported — change the design
 project, re-export, and rebuild.
 
-To rebuild after a re-export:
+The deployed page is **static HTML**. It carries no design runtime and no framework: the
+whole body is in the served markup, and about 50 lines of inline vanilla JS handle the
+contact modal, the copy-to-clipboard button and the reveal-on-scroll animation.
+
+Rebuilding after a re-export is two stages:
 
 ```
-python3 tools/build-index.py "<export>/Oscar Sarmiento.dc.html" tools/fonts.css index.html
+python3 tools/build-index.py "<export>/Oscar Sarmiento.dc.html" tools/fonts.css build.html
+python3 tools/prerender.py build.html index.html
 ```
 
 The script asserts on every substitution it makes, so it fails loudly rather than
@@ -47,19 +52,32 @@ silently producing a half-patched page. It does six things the raw export does n
 4. marks the below-the-fold images `loading="lazy"`;
 5. pins the hero video to `assets/banwag.mp4` (see below);
 6. resolves the hero `<source>` in the markup. This one matters: the browser's preload
-   scanner reads `src` before `support.js` can substitute `{{ heroSrc }}`, so leaving the
+   scanner reads `src` before the runtime can substitute `{{ heroSrc }}`, so leaving the
    placeholder there costs a wasted 404 request on every single page load.
+
+`tools/prerender.py` then removes the runtime entirely. It resolves the remaining `{{ }}`
+bindings to the only values they can take (accent `#2f6b3d`, modal closed, copy label
+"Copy"), turns the 19 `style-hover` attributes into real CSS `:hover` rules, converts the
+`ref=` and `onClick=` bindings into ids and `data-act` hooks, unwraps `<x-dc>` and
+`<helmet>`, and swaps the component class for the inline script. It asserts on every
+substitution — including that exactly 19 hover attributes were rewritten and that no
+`{{ }}` binding survives — so a changed export fails loudly.
+
+The e-mail address is still assembled in JS (`['oscar.jr', 'pssarmiento.com'].join('@')`)
+and never appears in the served HTML. That is deliberate, and pre-rendering preserves it.
 
 ### Supporting files
 
 | Path | What it is |
 |---|---|
-| `support.js` | the design runtime — renders the `<x-dc>` element, `{{ }}` bindings and `style-hover` attributes. Patched to load React from `vendor/` instead of unpkg.com. |
-| `vendor/react-18.3.1.min.js`, `vendor/react-dom-18.3.1.min.js` | vendored so the site has no runtime CDN dependency. Re-apply this patch to `support.js` after a re-export. |
 | `assets/*.webp`, `assets/logo.png` | images resized to the dimensions they are actually displayed at. The originals live in the design project; never re-compress these, re-export instead. |
 | `assets/fonts/*.woff2` | Latin and Latin-Ext subsets only, 14 files for 22 faces (several weights share one variable file). |
 | `assets/banwag.mp4` | the hero video. |
 | `tools/extract-fonts.py` | how `tools/fonts.css` and `assets/fonts/` were produced from the old bundled build; kept for reference. |
+
+A fresh export ships its own `support.js` and expects React and ReactDOM from unpkg.com.
+Neither is deployed any more — `tools/prerender.py` makes both unnecessary. Do not copy
+them back in.
 
 **Only one hero video ships.** The design project has a `heroVideo` prop offering
 "Banwag I" and "Banwag II", but shipping both would put 5.3 MB in the repository that no
@@ -93,10 +111,8 @@ as-is instead of running them through Jekyll.
 
 ## Known remaining work
 
-- The landing page is still rendered in the browser by `support.js`, so the served HTML
-  carries no body content for crawlers. Link previews work (Open Graph tags are static),
-  but a pre-rendered body would be better for search.
-- `barmm-fiscal-flows.html` is still a 463 KB single-file bundle.
-- `support.js` keeps a lazy reference to `@babel/standalone` on unpkg.com. It is never
-  requested by this page, which uses plain JS rather than JSX, but a future export that
-  introduces JSX would reintroduce a CDN dependency.
+- `barmm-fiscal-flows.html` is still a 463 KB single-file bundle, and its embedded runtime
+  loads React and ReactDOM from **unpkg.com** at page load — a live third-party dependency
+  on a page that otherwise serves from this origin. The same pre-render treatment would
+  fix it, but its design source has not been located.
+- `two-paths-to-work.html` has had no optimization pass.
