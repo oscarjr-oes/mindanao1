@@ -18,8 +18,9 @@ the Bangsamoro region.
 
 | File | Used by | Contents |
 |---|---|---|
-| `data/parang-roads.js` | `two-paths-to-work.html` | `window.parangRoads` — road geometry and bounds for Parang. |
-| `data/orc-roads.js` | `two-paths-to-work.html` | `window.orcRoads` — road geometry for the Cotabato City compound. |
+| `data/parang-roads.js` | `two-paths-to-work.html` | `window.parangRoads` — road geometry and bounds for Parang. **Built** from `src/parang-roads.full.js`. |
+| `data/orc-roads.js` | `two-paths-to-work.html` | `window.orcRoads` — road geometry for the Cotabato City compound. **Built** from `src/orc-roads.full.js`. |
+| `src/*-roads.full.js` | the build below | The full-precision OSM extracts. Source of truth; edit these, never `data/`. |
 | `data/sites.js` | `two-paths-to-work.html` | `window.sitesData` — site polygons plus `overlayBox`, the lat/lon corners the Landas masterplan image is georeferenced to. |
 | `data/landas-overlay.webp` | `two-paths-to-work.html` | Landas masterplan render, drawn on the Parang map at 50% opacity beneath the road network. |
 
@@ -134,6 +135,36 @@ future edit of the page, costs 42 KB instead of 232 KB because the assets are ca
 
 `two-paths-to-work.html` is ordinary hand-written HTML and can be edited normally.
 
+## How the road data is built
+
+`data/orc-roads.js` and `data/parang-roads.js` are build output. The full-precision OSM
+extracts live in `src/orc-roads.full.js` and `src/parang-roads.full.js`. Edit those, then:
+
+```
+python3 tools/simplify-roads.py            # rebuild data/*-roads.js
+python3 tools/simplify-roads.py --check    # report, write nothing
+```
+
+The extracts carry 7 decimal places (about 1 cm) and every vertex the survey recorded.
+The page fits each dataset to its canvas once and offers no zoom or pan, so the scale is
+fixed and most of that detail can never reach a pixel. The build applies Douglas-Peucker
+with the tolerance set in device pixels, and rounds to 5 decimals: 8,797 points become
+4,971, and the two files drop from 63.9 KB to 28.7 KB gzipped.
+
+**The sidebar's real-world figures are the thing to be careful about.** It reports
+"Parang total road length: 128.6 km" and "pedestrian network: 4006m", and a simplified
+polyline is shorter than the surveyed one — so a naive pass quietly shaved 100 m off a
+published number. Each road therefore carries an `m` field: its length in metres,
+measured on the `src/` points before anything is dropped. `analyzeNetwork()` prefers that
+field and falls back to measuring the geometry when it is absent, so un-simplified data
+still works. **If you add a road type or a new dataset, keep that field** — without it the
+page under-reports its own network.
+
+The build refuses to write if simplifying moves a dataset's summed road length by more
+than 0.5%, or if any road crosses the `length > 15` filter the renderer applies to
+vehicle drawing. It reads from `src/` and never from its own output, so running it twice
+is a no-op rather than a second round of simplification.
+
 ## Deploying
 
 GitHub Pages serves the `main` branch from the repository root. Push to `main` and the
@@ -146,4 +177,6 @@ as-is instead of running them through Jekyll.
   page, so the landing page's pre-render treatment does not apply. Only its delivery was
   changed. Its design source has never been located; `src/barmm-fiscal-flows.bundle.html`
   is all there is.
-- `two-paths-to-work.html` has had no optimization pass.
+- `two-paths-to-work.html`'s remaining weight is `data/landas-overlay.webp` (136 KB
+  gzipped, 1600×1000), which is 74% of the page's first-visit total. It has not been
+  looked at since the WebP conversion.
