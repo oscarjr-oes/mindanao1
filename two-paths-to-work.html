@@ -597,6 +597,7 @@ function projectRoads(roadData, canvas) {
     type: r.type,
     pts: r.pts.map(p => proj(p[0], p[1])),
     rawPts: r.pts,
+    m: r.m,
     length: 0, vc: 0, pcu: 0
   }));
   // Compute segment lengths
@@ -619,7 +620,10 @@ function analyzeNetwork(roads) {
   let totalLen = 0, pedLen = 0;
   const typeLens = {};
   roads.forEach(r => {
-    const len = computeGeoLength(r.rawPts);
+    // r.m is the surveyed length in metres, carried in the data file and
+    // measured before tools/simplify-roads.py drops any vertex. Without it
+    // the simplified geometry would under-report these real-world figures.
+    const len = r.m != null ? r.m : computeGeoLength(r.rawPts);
     totalLen += len;
     if (r.type === 'footway' || r.type === 'path' || r.type === 'proposed') pedLen += len;
     typeLens[r.type] = (typeLens[r.type] || 0) + len;
