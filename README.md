@@ -75,31 +75,62 @@ and never appears in the served HTML. That is deliberate, and pre-rendering pres
 | `assets/banwag.mp4` | the hero video. |
 | `tools/extract-fonts.py` | how `tools/fonts.css` and `assets/fonts/` were produced from the old bundled build; kept for reference. |
 
-A fresh export ships its own `support.js` and expects React and ReactDOM from unpkg.com.
-Neither is deployed any more — `tools/prerender.py` makes both unnecessary. Do not copy
-them back in.
+A fresh export ships its own `support.js`, and the runtime wants React and ReactDOM
+(a single-file export bundles them in; the unpacked project fetches them from unpkg.com).
+None of it is deployed any more — `tools/prerender.py` makes all three unnecessary. Do not
+copy them back in.
 
 **Only one hero video ships.** The design project has a `heroVideo` prop offering
 "Banwag I" and "Banwag II", but shipping both would put 5.3 MB in the repository that no
 visitor ever downloads. The build pins the source to `assets/banwag.mp4` ("Banwag I"). To
 switch, copy `assets/banwag2.mp4` out of the design project and change that one line.
 
-### `barmm-fiscal-flows.html` is still a bundle
+## How `barmm-fiscal-flows.html` is built
 
-It remains a **single-file export from a design tool**: a normal `<head>` and unpacking
-script, then one very long line holding a JSON asset map, then one very long line holding
-the real page as a JSON-encoded HTML string with assets referenced by bare UUID. On load
-the script decodes each asset into a `blob:` URL and replaces `document.documentElement`.
+The page comes out of the design tool as a **single-file export**: a loader in the outer
+head, one long line of JSON holding every script and font gzipped and base64'd, and one
+long line holding the real page as a JSON-encoded HTML string with each asset referenced
+by a bare UUID. At load the loader decodes everything, mints `blob:` URLs, substitutes the
+UUIDs and replaces `document.documentElement`.
 
-Two consequences:
+None of that is needed on a web server, so `tools/build-barmm.py` does the substitution at
+build time instead:
 
-1. **Never run `sed`, `awk` or line-based regex against those two long lines.** Parse the
-   JSON, mutate it, re-serialize it — and when you re-serialize, escape `</` as `<\/`, or a
-   literal `</script>` in the data will terminate the script element and break the page.
-   Locate the lines by content, not by a hardcoded line number.
-2. Anything that must survive the unpack — the `<title>`, favicon links — has to exist in
-   **both** the outer head and the inner page's head. Open Graph tags only need the outer
-   head, since scrapers read the served HTML and never run the script.
+```
+python3 tools/build-barmm.py src/barmm-fiscal-flows.bundle.html barmm-fiscal-flows.html
+```
+
+The export itself is kept at `src/barmm-fiscal-flows.bundle.html` — it is the only source
+this page has, so do not delete it. Nothing links to it, so no visitor downloads it.
+Re-export over that file and re-run the build; never hand-edit `barmm-fiscal-flows.html`.
+
+**Never run `sed`, `awk` or a line-based regex against the bundle.** Two of its lines are
+hundreds of thousands of characters of JSON. Parse the JSON, change it, re-serialize it —
+and when you do, escape `</` as `<\/`, or a literal `</script>` inside the data will end
+the script element and break the file. Find the lines by content, never by line number.
+
+What the build does: writes the ten assets into `assets/barmm/` under stable names derived
+from the `@font-face` rules and the script positions (the UUIDs change on every export),
+rewrites the references, strips the SRI hashes that belonged to the CDN copies, and folds
+the outer head's social and analytics tags into the one head the page now has.
+
+**`window.__resources` must come before the runtime script.** The dc-runtime resolves React
+and ReactDOM through that object and falls back to unpkg.com when it is missing, so it is
+injected directly after `<meta charset>` — ahead of `<script src="assets/barmm/dc-runtime.js">`.
+Put it at the end of `<head>` and the page silently starts loading React from a CDN again.
+The build asserts the ordering.
+
+Result: the document drops from 231,547 to 42,050 bytes gzipped. First visit falls about
+10% (207,947 B, since the assets still have to arrive once); every later visit, and every
+future edit of the page, costs 42 KB instead of 232 KB because the assets are cached.
+
+| Path | What it is |
+|---|---|
+| `src/barmm-fiscal-flows.bundle.html` | the design tool's export — the source. Not linked from anywhere. |
+| `assets/barmm/dc-runtime.js` | the design-component runtime (69 KB). |
+| `assets/barmm/design-system.js` | the `MindanaoDesignSystem_94fd56` component bundle (34 KB). |
+| `assets/barmm/react-*.min.js` | React and ReactDOM 18.3.1, served from this origin. |
+| `assets/barmm/*.woff2` | Karla and Marcellus, latin and latin-ext subsets. Five of the six load on a typical visit. |
 
 `two-paths-to-work.html` is ordinary hand-written HTML and can be edited normally.
 
@@ -111,8 +142,8 @@ as-is instead of running them through Jekyll.
 
 ## Known remaining work
 
-- `barmm-fiscal-flows.html` is still a 463 KB single-file bundle, and its embedded runtime
-  loads React and ReactDOM from **unpkg.com** at page load — a live third-party dependency
-  on a page that otherwise serves from this origin. The same pre-render treatment would
-  fix it, but its design source has not been located.
+- `barmm-fiscal-flows.html` keeps its React runtime — it is a real dashboard, not a static
+  page, so the landing page's pre-render treatment does not apply. Only its delivery was
+  changed. Its design source has never been located; `src/barmm-fiscal-flows.bundle.html`
+  is all there is.
 - `two-paths-to-work.html` has had no optimization pass.
