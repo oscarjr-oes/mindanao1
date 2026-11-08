@@ -22,7 +22,8 @@ the Bangsamoro region.
 | `data/orc-roads.js` | `two-paths-to-work.html` | `window.orcRoads` — road geometry for the Cotabato City compound. **Built** from `src/orc-roads.full.js`. |
 | `src/*-roads.full.js` | the build below | The full-precision OSM extracts. Source of truth; edit these, never `data/`. |
 | `data/sites.js` | `two-paths-to-work.html` | `window.sitesData` — site polygons plus `overlayBox`, the lat/lon corners the Landas masterplan image is georeferenced to. |
-| `data/landas-overlay.webp` | `two-paths-to-work.html` | Landas masterplan render, drawn on the Parang map at 50% opacity beneath the road network. |
+| `data/landas-overlay.webp` | `two-paths-to-work.html` | Landas masterplan render, drawn on the Parang map at 50% opacity beneath the road network. **Built** from `src/landas-overlay.master.webp`. |
+| `src/landas-overlay.master.webp` | the build below | The 2880×1800 lossless master. Source of truth; edit this, never `data/`. |
 
 ## How `index.html` is built — read this first
 
@@ -165,6 +166,42 @@ than 0.5%, or if any road crosses the `length > 15` filter the renderer applies 
 vehicle drawing. It reads from `src/` and never from its own output, so running it twice
 is a no-op rather than a second round of simplification.
 
+## How the overlay image is built
+
+`data/landas-overlay.webp` is build output. The master lives at
+`src/landas-overlay.master.webp` — 2880×1800, lossless. Replace that, then:
+
+```
+python3 tools/build-overlay.py            # rebuild data/landas-overlay.webp
+python3 tools/build-overlay.py --check    # report, write nothing
+```
+
+**The page can only ever draw this image at one size.** `drawRoads()` paints it into a
+rectangle derived from `sitesData.overlayBox` and the Parang projection, and there is no
+zoom and no pan, so the rectangle is a pure function of the pane. It is 538×336 device
+pixels on a 1920×1080 screen at DPR 2, 726×454 on a 5K Studio Display, and 857×536 on a
+Pro Display XDR with the window maximised — the largest it can be anywhere. The shipped
+file is 896×560, the smallest round size at or above that ceiling, so it is never
+upscaled and is downscaled on every real display. It had been shipping at 1600×1000:
+three times oversized on a laptop, nine times by pixel count.
+
+At q80, measured in the browser against the previous file at all three sizes above, the
+difference is RMS 2.1–2.9 out of 255 once the 50% opacity is applied — invisible at
+actual size, and barely visible at 3× magnification of the 6K case. 136,526 B becomes
+59,250 B.
+
+Two things that look like wins and are not. **Cropping to the content** — 78% of the
+image is fully transparent — saves 346 bytes, because transparent black costs almost
+nothing to encode, and it would require narrowing `overlayBox` to match, which risks
+misregistering the plan against the roads. **AVIF** is 8–10% smaller than WebP at matched
+error on this image, which does not pay for a format change and a `<picture>` fallback.
+
+The build refuses to write unless the source is larger than the output (so it can never
+re-encode its own lossy output), the output is at least as large as the drawn ceiling,
+and the image's aspect ratio matches `overlayBox`'s to within 1% — that last one because
+`drawImage()` stretches silently, so a re-framed master would put the masterplan on the
+wrong ground with nothing to show for it.
+
 ## Deploying
 
 GitHub Pages serves the `main` branch from the repository root. Push to `main` and the
@@ -177,6 +214,7 @@ as-is instead of running them through Jekyll.
   page, so the landing page's pre-render treatment does not apply. Only its delivery was
   changed. Its design source has never been located; `src/barmm-fiscal-flows.bundle.html`
   is all there is.
-- `two-paths-to-work.html`'s remaining weight is `data/landas-overlay.webp` (136 KB
-  gzipped, 1600×1000), which is 74% of the page's first-visit total. It has not been
-  looked at since the WebP conversion.
+- `two-paths-to-work.html` now costs 106,516 B on a first visit, down from 183,792 B:
+  56% of it the overlay image, 27% the two road files, 17% the document itself. Nothing
+  left on the page is oversized for what it is; a further cut would mean giving
+  something up.
